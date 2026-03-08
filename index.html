@@ -276,6 +276,10 @@ const PATH = buildPath();
 const pathSet = new Set(PATH.map(p => p[0]+','+p[1]));
 
 const TOWER_DEFS = [
+  { id:'pea', name:'Pea Shooter', cost:20, range:90, damage:3, rate:4, color:'#4f4',
+    desc:'Super cheap, rapid fire', bulletColor:'#4f4', bulletSpeed:9, splash:0 },
+  { id:'spark', name:'Spark Tower', cost:35, range:100, damage:5, rate:7, color:'#fd4',
+    desc:'Budget zapper', bulletColor:'#fd4', bulletSpeed:7, splash:0 },
   { id:'laser', name:'Laser Turret', cost:50, range:120, damage:8, rate:8, color:'#0ff',
     desc:'Fast beam weapon', bulletColor:'#0ff', bulletSpeed:8, splash:0 },
   { id:'plasma', name:'Plasma Cannon', cost:100, range:140, damage:30, rate:25, color:'#f0f',
