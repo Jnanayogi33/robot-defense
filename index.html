@@ -204,6 +204,7 @@ h1 {
     <div id="controls">
       <button onclick="startWave()">▶ Next Wave</button>
       <button onclick="sellMode()">💰 Sell</button>
+      <button onclick="toggleFullscreen()" id="fs-btn" title="Fullscreen">⛶</button>
     </div>
     <div id="msg"></div>
   </div>
@@ -1822,6 +1823,37 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
+// ── Fullscreen ──────────────────────────────────────────────
+function toggleFullscreen() {
+  const el = document.documentElement;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    // iOS doesn't support Fullscreen API — prompt add to home screen
+    showMsg('Tap Share → "Add to Home Screen" for fullscreen!');
+    return;
+  }
+  if (!document.fullscreenElement) {
+    el.requestFullscreen && el.requestFullscreen();
+    document.getElementById('fs-btn').textContent = '✕';
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+    document.getElementById('fs-btn').textContent = '⛶';
+  }
+}
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fs-btn');
+  if (btn) btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+});
+
+// Show "Add to Home Screen" hint on iOS if not already standalone
+(function() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    setTimeout(() => showMsg('Tip: Share → "Add to Home Screen" for fullscreen!'), 2000);
+  }
+})();
+
 sizeCanvas();
 loop();
 
