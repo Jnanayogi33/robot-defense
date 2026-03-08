@@ -303,6 +303,8 @@ const ENEMY_TYPES = [
   { name:'Mech', hp:500, speed:0.5, reward:80, color:'#f4f', size:14 },
   { name:'Swarm', hp:20, speed:2.2, reward:5, color:'#4f4', size:4 },
   { name:'Titan', hp:1500, speed:0.35, reward:200, color:'#fff', size:16 },
+  { name:'Juggernaut', hp:6000, speed:0.18, reward:600, color:'#ff2244', size:22 },
+  { name:'Specter', hp:900, speed:5.0, reward:400, color:'#88ffee', size:7 },
 ];
 
 let placingMine = false;
@@ -403,10 +405,20 @@ function startWave() {
   waveNum++;
   waveActive = true;
   spawnQueue = [];
+  // Wave 20+: guarantee boss robots in the wave
+  if (waveNum >= 20) {
+    let hpMult = 1 + (waveNum - 1) * 0.25;
+    for (let b = 0; b < 2; b++) {
+      let base = ENEMY_TYPES[7]; // Juggernaut
+      spawnQueue.push({ ...base, hp: Math.floor(base.hp * hpMult), maxHp: Math.floor(base.hp * hpMult), progress: 0, done: false, id: Math.random() });
+    }
+  }
   let count = 5 + waveNum * 3;
   for (let i = 0; i < count; i++) {
     let typeIdx;
-    if (waveNum >= 10 && Math.random() < 0.08) typeIdx = 6;
+    if (waveNum >= 20 && Math.random() < 0.25) typeIdx = 8; // Specter
+    else if (waveNum >= 20 && Math.random() < 0.12) typeIdx = 7; // Juggernaut
+    else if (waveNum >= 10 && Math.random() < 0.08) typeIdx = 6;
     else if (waveNum >= 7 && Math.random() < 0.15) typeIdx = 4;
     else if (waveNum >= 4 && Math.random() < 0.2) typeIdx = 3;
     else if (waveNum >= 5 && Math.random() < 0.25) typeIdx = 5;
