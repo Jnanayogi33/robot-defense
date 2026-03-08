@@ -1847,7 +1847,7 @@ loop();
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/robot-defense/sw.js')
+    navigator.serviceWorker.register('/robot-defense/sw.js', { updateViaCache: 'none' })
       .then(() => console.log('SW registered'))
       .catch(e => console.log('SW error:', e));
   });

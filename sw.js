@@ -1,25 +1,27 @@
-// Service Worker — network-first strategy
-// Always tries to load fresh from network, falls back to cache if offline
-
-const CACHE = 'robot-defense-v1';
+// Service Worker — network-first, always fresh
+const CACHE = 'robot-defense-v2';
 
 self.addEventListener('install', e => {
-  self.skipWaiting(); // activate immediately
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim()); // take control of all pages immediately
+  // Delete any old cache versions
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then(res => {
-        // Store fresh copy in cache
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy));
         return res;
       })
-      .catch(() => caches.match(e.request)) // offline fallback
+      .catch(() => caches.match(e.request))
   );
 });
