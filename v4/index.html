@@ -204,6 +204,7 @@ h1 {
     <div id="controls">
       <button onclick="startWave()">▶ Next Wave</button>
       <button onclick="sellMode()">💰 Sell</button>
+      <button onclick="Music.toggle()" id="music-btn">🔊</button>
     </div>
     <div id="msg"></div>
   </div>
@@ -1838,6 +1839,131 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
+
+// ── MUSIC ENGINE ─────────────────────────────────────────────────────────────
+const Music = (() => {
+  let ctx, playing = false, loopTimer;
+  const BPM = 140;
+  const s = 60 / BPM / 4; // seconds per 16th note
+
+  const F = {
+    _:0,
+    A2:110.00, C3:130.81, D3:146.83, E3:164.81, G3:196.00, A3:220.00,
+    B3:246.94, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00,
+    A4:440.00, B4:493.88, C5:523.25, D5:587.33, E5:659.25, G5:784.00, A5:880.00
+  };
+
+  // 16-step melody (A minor — sci-fi robot march feel)
+  const MEL = [
+    F.A4, F._,   F.C5, F.E5,  F.G5, F.E5, F.C5, F._,
+    F.D5, F.B4,  F.G4, F._,   F.A4, F.C5, F.E5, F.G5
+  ];
+  // Counter-melody harmony
+  const HAR = [
+    F.E4, F._,   F.G4, F.C5,  F.E5, F.C5, F.G4, F._,
+    F.B4, F.G4,  F.E4, F._,   F.F4, F.A4, F.C5, F.E5
+  ];
+  // Bassline
+  const BAS = [
+    F.A2, F.A2,  F._,  F.A2,  F.C3, F._,  F.C3, F.E3,
+    F.G3, F._,   F.E3, F.C3,  F.A2, F._,  F.A3, F._
+  ];
+
+  function osc(freq, t, dur, type, vol, detune=0) {
+    if (!freq) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq; o.detune.value = detune;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.88);
+    o.start(t); o.stop(t + dur);
+  }
+
+  function kick(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+    g.gain.setValueAtTime(0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.start(t); o.stop(t + 0.15);
+  }
+
+  function snare(t) {
+    // noise burst
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.12), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; flt.type = 'bandpass'; flt.frequency.value = 2500;
+    src.connect(flt); flt.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    src.start(t); src.stop(t + 0.12);
+  }
+
+  function hihat(t, vol=0.04) {
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.04), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; flt.type = 'highpass'; flt.frequency.value = 8000;
+    src.connect(flt); flt.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    src.start(t); src.stop(t + 0.04);
+  }
+
+  function scheduleBar(t0) {
+    for (let i = 0; i < 16; i++) {
+      const t = t0 + i * s;
+      osc(MEL[i], t, s * 1.6, 'square',   0.07);
+      osc(HAR[i], t, s * 1.4, 'square',   0.04, -7);
+      osc(BAS[i], t, s * 1.9, 'sawtooth', 0.09);
+      // Drums
+      if (i === 0 || i === 8)            kick(t);
+      if (i === 4 || i === 12)           snare(t);
+      if (i % 2 === 0)                   hihat(t);
+      else                               hihat(t, 0.02);
+    }
+  }
+
+  function loop(t0) {
+    if (!playing) return;
+    scheduleBar(t0);
+    const barDur = s * 16;
+    loopTimer = setTimeout(() => loop(t0 + barDur), (barDur - 0.08) * 1000);
+  }
+
+  function start() {
+    if (playing) return;
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume().then(() => { playing = true; loop(ctx.currentTime + 0.1); });
+  }
+
+  function stop() {
+    playing = false;
+    clearTimeout(loopTimer);
+  }
+
+  function toggle() {
+    playing ? stop() : start();
+    const btn = document.getElementById('music-btn');
+    if (btn) btn.textContent = playing ? '🔊' : '🔇';
+    return playing;
+  }
+
+  return { start, stop, toggle, isPlaying: () => playing };
+})();
+
+// Auto-start on first tap (browser requires user gesture for audio)
+let _musicInit = false;
+function _tryStartMusic() {
+  if (!_musicInit) { _musicInit = true; Music.start(); }
+}
+document.addEventListener('touchend', _tryStartMusic, true);
+document.addEventListener('click', _tryStartMusic, true);
 
 sizeCanvas();
 loop();
