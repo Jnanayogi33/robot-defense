@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Future Defense: Robot Uprising</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -9,80 +12,118 @@ body {
   background: #0a0a1a;
   color: #e0e0ff;
   font-family: 'Courier New', monospace;
+  height: 100vh;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#layout {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  gap: 4px;
+  padding: 4px;
+}
+canvas {
+  display: block;
+  flex-shrink: 0;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid #223;
+  border-radius: 4px;
+  cursor: crosshair;
+  align-self: center;
+}
+#sidebar {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  overflow-x: hidden;
+  overflow: hidden;
+  gap: 4px;
+  min-width: 0;
 }
 h1 {
-  margin: 12px 0 4px;
-  font-size: 22px;
-  letter-spacing: 4px;
+  font-size: 13px;
+  letter-spacing: 3px;
   text-transform: uppercase;
   color: #00ffcc;
-  text-shadow: 0 0 10px #00ffcc88;
+  text-shadow: 0 0 8px #00ffcc88;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 2px 0;
 }
 #hud {
   display: flex;
-  gap: 24px;
-  margin: 6px 0;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 11px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  justify-content: center;
 }
 #hud span { color: #aaf; }
 #hud .val { color: #0ff; font-weight: bold; }
 #shop {
-  display: flex;
-  gap: 10px;
-  margin: 6px 0 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  align-content: start;
+  scrollbar-width: none;
+  min-height: 0;
 }
+#shop::-webkit-scrollbar { display: none; }
 .tower-btn {
   background: #1a1a3a;
   border: 1px solid #334;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 5px;
+  padding: 4px 5px;
   color: #cce;
   cursor: pointer;
   font-family: inherit;
-  font-size: 12px;
-  transition: 0.2s;
+  font-size: 10px;
   text-align: center;
-  min-width: 100px;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.3;
+  min-height: 44px;
 }
-.tower-btn:hover { border-color: #0ff; box-shadow: 0 0 8px #0ff4; }
-.tower-btn.selected { border-color: #0f0; box-shadow: 0 0 12px #0f04; background: #1a2a1a; }
-.tower-btn .name { font-weight: bold; color: #0ff; }
-.tower-btn .cost { color: #ff0; font-size: 11px; }
-.tower-btn .desc { color: #889; font-size: 10px; }
-canvas {
-  border: 1px solid #223;
-  border-radius: 4px;
-  cursor: crosshair;
-}
-#msg {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #f88;
-  height: 18px;
-}
+.tower-btn:active { border-color: #0ff; box-shadow: 0 0 8px #0ff4; }
+.tower-btn.selected { border-color: #0f0; box-shadow: 0 0 10px #0f04; background: #1a2a1a; }
+.tower-btn .name { font-weight: bold; color: #0ff; font-size: 10px; }
+.tower-btn .cost { color: #ff0; font-size: 9px; }
+.tower-btn .desc { color: #889; font-size: 8px; }
 #controls {
-  margin: 6px 0;
   display: flex;
-  gap: 10px;
+  gap: 3px;
+  flex-shrink: 0;
 }
 #controls button {
+  flex: 1;
   background: #1a1a3a;
   border: 1px solid #446;
   border-radius: 4px;
-  padding: 6px 16px;
+  padding: 6px 4px;
   color: #aaf;
   cursor: pointer;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 10px;
+  min-height: 34px;
+  -webkit-tap-highlight-color: transparent;
 }
-#controls button:hover { border-color: #0ff; }
+#controls button:active { border-color: #0ff; }
+#msg {
+  font-size: 10px;
+  color: #f88;
+  height: 14px;
+  flex-shrink: 0;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
 #overlay {
   display: none;
   position: fixed;
@@ -97,40 +138,68 @@ canvas {
   background: #111;
   border: 2px solid #0ff;
   border-radius: 12px;
-  padding: 30px 40px;
+  padding: 20px 28px;
   text-align: center;
+  max-width: 85vw;
 }
-#overlay-box h2 { color: #0ff; font-size: 24px; margin-bottom: 10px; }
-#overlay-box p { margin: 6px 0; }
+#overlay-box h2 { color: #0ff; font-size: 18px; margin-bottom: 8px; }
+#overlay-box p { margin: 4px 0; font-size: 13px; }
 #overlay-box button {
-  margin-top: 14px;
+  margin-top: 12px;
   background: #0a2a2a;
   border: 1px solid #0ff;
   color: #0ff;
-  padding: 8px 24px;
+  padding: 8px 20px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   border-radius: 4px;
 }
+#portrait-warn {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0a0a1a;
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+#portrait-warn .icon { font-size: 50px; margin-bottom: 12px; }
+#portrait-warn p { color: #0ff; font-size: 15px; letter-spacing: 1px; }
+@media (orientation: portrait) {
+  #portrait-warn { display: flex; }
+}
 </style>
 </head>
+
 <body>
-<h1>Future Defense</h1>
-<div id="hud">
-  <span>Credits: <span class="val" id="money">200</span></span>
-  <span>Wave: <span class="val" id="wave">0</span></span>
-  <span>Lives: <span class="val" id="lives">20</span></span>
-  <span>Score: <span class="val" id="score">0</span></span>
+
+<div id="portrait-warn">
+  <div class="icon">📱↻</div>
+  <p>ROTATE TO LANDSCAPE<br>TO PLAY</p>
 </div>
-<div id="shop"></div>
-<div id="controls">
-  <button onclick="startWave()">Next Wave</button>
-  <button onclick="sellMode()">Sell Tower</button>
-  <button onclick="openMiniGame()" style="color:#f92;border-color:#f92">Mini Game</button>
+
+<div id="layout">
+  <canvas id="c"></canvas>
+  <div id="sidebar">
+    <h1>Future Defense</h1>
+    <div id="hud">
+      <span>Credits: <span class="val" id="money">200</span></span>
+      <span>Wave: <span class="val" id="wave">0</span></span>
+      <span>Lives: <span class="val" id="lives">20</span></span>
+      <span>Score: <span class="val" id="score">0</span></span>
+    </div>
+    <div id="shop"></div>
+    <div id="controls">
+      <button onclick="startWave()">▶ Next Wave</button>
+      <button onclick="sellMode()">💰 Sell</button>
+    </div>
+    <div id="msg"></div>
+  </div>
 </div>
-<canvas id="c"></canvas>
-<div id="msg"></div>
 
 <div id="overlay">
   <div id="overlay-box">
@@ -140,33 +209,53 @@ canvas {
   </div>
 </div>
 
-<div id="mg-overlay" style="display:none;position:fixed;inset:0;background:#000d;z-index:20;justify-content:center;align-items:center;">
-  <div style="text-align:center;">
-    <div style="display:flex;gap:20px;justify-content:center;margin-bottom:6px;font-size:13px;">
-      <span>Kills: <span style="color:#0ff;font-weight:bold" id="mg-kills">0</span></span>
-      <span>Time: <span style="color:#f92;font-weight:bold" id="mg-time">30</span></span>
-      <span>Bonus: <span style="color:#ff0;font-weight:bold" id="mg-bonus">0</span></span>
-    </div>
-    <canvas id="mg-canvas" style="border:2px solid #f92;border-radius:6px;cursor:crosshair;"></canvas>
-    <div style="margin-top:8px;">
-      <button onclick="closeMiniGame()" style="background:#1a1a3a;border:1px solid #f92;color:#f92;padding:6px 16px;font-family:inherit;font-size:13px;cursor:pointer;border-radius:4px;">Close & Collect</button>
-    </div>
-  </div>
-</div>
-
 <script>
+
 const C = document.getElementById('c');
 const ctx = C.getContext('2d');
+
+function sizeCanvas() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const gap = 10;
+  const sidebarW = Math.min(Math.max(130, vw * 0.22), 220);
+  const availW = vw - sidebarW - gap;
+  const availH = vh - gap;
+  const scaleByW = availW / COLS;
+  const scaleByH = availH / ROWS;
+  const scale = Math.min(scaleByW, scaleByH);
+  C.style.width  = Math.floor(scale * COLS) + 'px';
+  C.style.height = Math.floor(scale * ROWS) + 'px';
+}
+window.addEventListener('resize', sizeCanvas);
+
 const COLS = 20, ROWS = 14, TILE = 36;
 C.width = COLS * TILE;
 C.height = ROWS * TILE;
+
+function sizeCanvas() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const gap = 8; // layout gap + padding
+  // Sidebar needs enough space for 2-col shop grid
+  const sidebarW = Math.min(Math.max(130, vw * 0.22), 220);
+  const availW = vw - sidebarW - gap;
+  const availH = vh - gap;
+  const scaleByW = availW / COLS;
+  const scaleByH = availH / ROWS;
+  const scale = Math.min(scaleByW, scaleByH);
+  const cssW = Math.floor(scale * COLS);
+  const cssH = Math.floor(scale * ROWS);
+  C.style.width = cssW + 'px';
+  C.style.height = cssH + 'px';
+}
+window.addEventListener('resize', sizeCanvas);
 
 let gameTime = 0;
 let money = 200, lives = 20, waveNum = 0, score = 0;
 let selectedTower = null, selling = false, waveActive = false;
 let towers = [], enemies = [], bullets = [], particles = [], spawnQueue = [], mines = [];
 let spawnTimer = 0, msg = '', msgTimer = 0;
-let mgActive = false;
 
 const PATH_POINTS = [
   [0,3],[4,3],[4,7],[10,7],[10,2],[15,2],[15,10],[19,10]
@@ -231,7 +320,6 @@ TOWER_DEFS.forEach(t => {
   btn.dataset.id = t.id;
   shopEl.appendChild(btn);
 });
-// Mine button
 let mineBtn = document.createElement('button');
 mineBtn.className = 'tower-btn';
 mineBtn.innerHTML = `<div class="name" style="color:#f42">${MINE_DEF.name}</div><div class="cost">$${MINE_DEF.cost}</div><div class="desc">${MINE_DEF.desc}</div>`;
@@ -247,10 +335,25 @@ function updateShopUI() {
 function showMsg(m) { msg = m; msgTimer = 120; }
 function sellMode() { selling = !selling; selectedTower = null; placingMine = false; updateShopUI(); showMsg(selling ? 'Click a tower to sell it' : ''); }
 
-C.addEventListener('click', e => {
+// Unified coordinate handler for click and touch
+function getCanvasCell(e) {
   let rect = C.getBoundingClientRect();
-  let col = Math.floor((e.clientX - rect.left) / TILE);
-  let row = Math.floor((e.clientY - rect.top) / TILE);
+  let clientX, clientY;
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    clientX = e.changedTouches[0].clientX;
+    clientY = e.changedTouches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  let col = Math.floor((clientX - rect.left) / rect.width * COLS);
+  let row = Math.floor((clientY - rect.top) / rect.height * ROWS);
+  return { col, row };
+}
+
+function handleCanvasInteraction(e) {
+  e.preventDefault();
+  let { col, row } = getCanvasCell(e);
   if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
   if (selling) {
     let idx = towers.findIndex(t => t.col === col && t.row === row);
@@ -294,7 +397,10 @@ C.addEventListener('click', e => {
     angle: 0,
     fireFlash: 0
   });
-});
+}
+
+C.addEventListener('click', handleCanvasInteraction);
+C.addEventListener('touchend', handleCanvasInteraction, { passive: false });
 
 function startWave() {
   if (waveActive) return;
@@ -334,9 +440,7 @@ function restartGame() {
   money = 200; lives = 20; waveNum = 0; score = 0;
   towers = []; enemies = []; bullets = []; particles = []; spawnQueue = []; mines = [];
   waveActive = false; selectedTower = null; selling = false; placingMine = false;
-  mgActive = false;
   document.getElementById('overlay').classList.remove('show');
-  document.getElementById('mg-overlay').style.display = 'none';
 }
 
 // ============ UPDATE ============
@@ -370,7 +474,6 @@ function update() {
     }
   });
 
-  // Mine logic
   mines.forEach(m => {
     if (m.detonated) return;
     if (!m.armed) {
@@ -378,7 +481,6 @@ function update() {
       if (m.armTimer <= 0) m.armed = true;
       return;
     }
-    // Check proximity to enemies
     let triggered = false;
     enemies.forEach(e => {
       if (Math.hypot(e.x - m.x, e.y - m.y) < 18) triggered = true;
@@ -386,7 +488,6 @@ function update() {
     if (triggered) {
       m.detonated = true;
       m.flashTimer = 12;
-      // Damage all enemies in splash radius
       enemies.forEach(e => {
         let d = Math.hypot(e.x - m.x, e.y - m.y);
         if (d < MINE_DEF.splashRadius) {
@@ -394,7 +495,6 @@ function update() {
           e.hp -= Math.floor(MINE_DEF.damage * falloff);
         }
       });
-      // Big explosion
       spawnMineExplosion(m.x, m.y);
     }
   });
@@ -471,7 +571,6 @@ function update() {
     let dx = b.tx - b.x, dy = b.ty - b.y;
     let d = Math.hypot(dx, dy);
 
-    // Homing missiles curve toward target
     if (b.homing && d > b.speed * 3) {
       let targetAngle = Math.atan2(dy, dx);
       if (b.angle === undefined) b.angle = targetAngle;
@@ -481,7 +580,6 @@ function update() {
       b.angle += diff * 0.12;
       b.x += Math.cos(b.angle) * b.speed;
       b.y += Math.sin(b.angle) * b.speed;
-      // Smoke trail
       if (gameTime % 2 === 0) {
         particles.push({ x: b.x, y: b.y, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
           life: 10 + Math.random()*8, color: '#888', size: 1.5 + Math.random(), gravity: -0.02 });
@@ -559,7 +657,6 @@ function spawnDeathExplosion(x, y, color, size) {
       gravity: 0.08
     });
   }
-  // Metal debris
   for (let i = 0; i < 5; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 2 + Math.random() * 3;
@@ -576,7 +673,6 @@ function spawnDeathExplosion(x, y, color, size) {
 }
 
 function spawnMineExplosion(x, y) {
-  // Large fiery explosion
   for (let i = 0; i < 30; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 2 + Math.random() * 5;
@@ -592,7 +688,6 @@ function spawnMineExplosion(x, y) {
       gravity: 0.06
     });
   }
-  // Shrapnel
   for (let i = 0; i < 10; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 3 + Math.random() * 4;
@@ -606,7 +701,6 @@ function spawnMineExplosion(x, y) {
       gravity: 0.15
     });
   }
-  // Smoke
   for (let i = 0; i < 8; i++) {
     let angle = Math.random() * Math.PI * 2;
     let speed = 0.5 + Math.random() * 2;
@@ -644,8 +738,6 @@ function drawTower(t) {
   ctx.save();
   ctx.translate(cx, cy);
 
-  // --- Platform base (all towers) ---
-  // Concrete pad with bolts
   let grad = ctx.createRadialGradient(0, 2, 2, 0, 0, 16);
   grad.addColorStop(0, '#3a3a4a');
   grad.addColorStop(1, '#1a1a2a');
@@ -659,31 +751,23 @@ function drawTower(t) {
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Bolt details
   ctx.fillStyle = '#666';
   [[-11,-7],[11,-7],[-11,7],[11,7]].forEach(([bx,by]) => {
     ctx.beginPath(); ctx.arc(bx,by,1.5,0,Math.PI*2); ctx.fill();
   });
 
-  // Armored skirt
   ctx.fillStyle = '#2a2a3a';
   ctx.fillRect(-12, -4, 24, 4);
   ctx.strokeStyle = '#444';
   ctx.strokeRect(-12, -4, 24, 4);
 
   if (id === 'laser') {
-    // --- LASER TURRET: sleek rotating turret on pedestal ---
-    // Pedestal cylinder
     ctx.fillStyle = '#333';
     ctx.fillRect(-6, -8, 12, 6);
     ctx.fillStyle = '#444';
     ctx.fillRect(-8, -3, 16, 3);
-
-    // Rotating part
     ctx.save();
     ctx.rotate(t.angle);
-
-    // Turret housing
     ctx.fillStyle = '#2a3a4a';
     ctx.beginPath();
     ctx.moveTo(-8, -6); ctx.lineTo(6, -4); ctx.lineTo(14, -2);
@@ -693,14 +777,10 @@ function drawTower(t) {
     ctx.strokeStyle = '#4a6a8a';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Barrel
     ctx.fillStyle = '#556';
     ctx.fillRect(8, -2, 10, 4);
     ctx.fillStyle = flash ? '#fff' : col;
     ctx.fillRect(16, -1.5, 3, 3);
-
-    // Lens / emitter
     ctx.beginPath();
     ctx.arc(18, 0, 2, 0, Math.PI*2);
     ctx.fillStyle = flash ? '#fff' : col;
@@ -711,30 +791,21 @@ function drawTower(t) {
       ctx.fill();
       ctx.shadowBlur = 0;
     }
-
-    // Panel lines
     ctx.strokeStyle = '#3a5a7a';
     ctx.beginPath(); ctx.moveTo(-2,-5); ctx.lineTo(-2,5); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(4,-3.5); ctx.lineTo(4,3.5); ctx.stroke();
-
-    // Sensor dot
     ctx.fillStyle = '#0f0';
     ctx.beginPath(); ctx.arc(-4, -3, 1.2, 0, Math.PI*2); ctx.fill();
-
     ctx.restore();
 
   } else if (id === 'plasma') {
-    // --- PLASMA CANNON: heavy dual-barrel cannon ---
-    // Heavy base
     ctx.fillStyle = '#2a1a2a';
     ctx.fillRect(-8, -8, 16, 6);
     ctx.fillStyle = '#3a2a3a';
-    ctx.beginPath(); ctx.arc(0, -5, 7, 0, Math.PI*2); ctx.fill();
-
+    ctx.beginPath();
+    ctx.arc(0, -5, 7, 0, Math.PI*2); ctx.fill();
     ctx.save();
     ctx.rotate(t.angle);
-
-    // Main housing - bulky
     ctx.fillStyle = '#3a2040';
     ctx.beginPath();
     ctx.moveTo(-9, -7); ctx.lineTo(8, -6); ctx.lineTo(12, -3);
@@ -744,12 +815,9 @@ function drawTower(t) {
     ctx.strokeStyle = '#6a3a6a';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Dual barrels
     ctx.fillStyle = '#4a3050';
     ctx.fillRect(8, -5, 10, 3);
     ctx.fillRect(8, 2, 10, 3);
-    // Barrel tips glow
     ctx.fillStyle = flash ? '#fff' : '#c0f';
     ctx.beginPath(); ctx.arc(18, -3.5, 2, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(18, 3.5, 2, 0, Math.PI*2); ctx.fill();
@@ -759,29 +827,20 @@ function drawTower(t) {
       ctx.beginPath(); ctx.arc(18, 0, 4, 0, Math.PI*2); ctx.fill();
       ctx.shadowBlur = 0;
     }
-
-    // Heat vents
     ctx.fillStyle = '#2a1a2a';
     for (let i = 0; i < 3; i++) {
       ctx.fillRect(-6 + i*5, -7.5, 2, 1.5);
       ctx.fillRect(-6 + i*5, 6, 2, 1.5);
     }
-
-    // Power core glow
     ctx.fillStyle = hexColor('#f0f', 0.3 + Math.sin(gameTime*0.1)*0.2);
     ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill();
-
     ctx.restore();
 
   } else if (id === 'emp') {
-    // --- EMP TOWER: Tesla-coil style with ring emitter ---
-    // Central pillar
     ctx.fillStyle = '#3a3a20';
     ctx.fillRect(-4, -12, 8, 10);
     ctx.fillStyle = '#4a4a30';
     ctx.fillRect(-6, -4, 12, 4);
-
-    // Coil rings
     for (let i = 0; i < 3; i++) {
       let ry = -12 + i * 3;
       let pulse = Math.sin(gameTime * 0.08 + i) * 0.3 + 0.7;
@@ -791,50 +850,36 @@ function drawTower(t) {
       ctx.ellipse(0, ry, 10 - i, 3, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-
-    // Top sphere emitter
     let empPulse = Math.sin(gameTime * 0.1) * 0.3 + 0.7;
     ctx.fillStyle = hexColor('#ff0', empPulse);
     ctx.beginPath(); ctx.arc(0, -14, 5, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#aa0';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Inner core
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(0, -14, 2, 0, Math.PI*2); ctx.fill();
-
     if (flash) {
       ctx.shadowColor = '#ff0';
       ctx.shadowBlur = 20;
       ctx.beginPath(); ctx.arc(0, -14, 6, 0, Math.PI*2); ctx.fill();
       ctx.shadowBlur = 0;
-
-      // EMP ring expanding
       ctx.strokeStyle = hexColor('#ff0', 0.5);
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(0, 0, 15 + (5 - t.fireFlash) * 8, 0, Math.PI*2);
       ctx.stroke();
     }
-
-    // Warning stripes
     ctx.fillStyle = '#aa0';
     ctx.fillRect(-8, 8, 4, 2);
     ctx.fillRect(4, 8, 4, 2);
 
   } else if (id === 'rail') {
-    // --- RAILGUN: long electromagnetic accelerator ---
-    // Heavy reinforced base
     ctx.fillStyle = '#2a1a0a';
     ctx.fillRect(-8, -6, 16, 8);
     ctx.fillStyle = '#3a2a1a';
     ctx.beginPath(); ctx.arc(0, -3, 8, Math.PI, 0); ctx.fill();
-
     ctx.save();
     ctx.rotate(t.angle);
-
-    // Long barrel assembly
     ctx.fillStyle = '#3a2a1a';
     ctx.beginPath();
     ctx.moveTo(-10, -5); ctx.lineTo(4, -4);
@@ -842,13 +887,9 @@ function drawTower(t) {
     ctx.lineTo(4, 4); ctx.lineTo(-10, 5);
     ctx.closePath();
     ctx.fill();
-
-    // Rail tracks (two parallel conductors)
     ctx.fillStyle = '#654';
     ctx.fillRect(4, -4.5, 18, 2);
     ctx.fillRect(4, 2.5, 18, 2);
-
-    // Electromagnetic coils along barrel
     ctx.strokeStyle = '#f84';
     ctx.lineWidth = 1;
     for (let i = 0; i < 5; i++) {
@@ -857,8 +898,6 @@ function drawTower(t) {
       ctx.moveTo(rx, -5); ctx.lineTo(rx, 5);
       ctx.stroke();
     }
-
-    // Muzzle
     ctx.fillStyle = flash ? '#fff' : '#f60';
     ctx.beginPath(); ctx.arc(22, 0, 3, 0, Math.PI*2); ctx.fill();
     if (flash) {
@@ -866,7 +905,6 @@ function drawTower(t) {
       ctx.shadowBlur = 20;
       ctx.fill();
       ctx.shadowBlur = 0;
-      // Muzzle flash lines
       ctx.strokeStyle = '#f84';
       ctx.lineWidth = 1.5;
       for (let i = 0; i < 4; i++) {
@@ -877,41 +915,28 @@ function drawTower(t) {
         ctx.stroke();
       }
     }
-
-    // Capacitor bank
     ctx.fillStyle = '#4a3020';
     ctx.fillRect(-8, -3, 6, 6);
     ctx.fillStyle = flash ? '#fa0' : '#853';
     ctx.fillRect(-7, -2, 4, 4);
-
-    // Status LED
     ctx.fillStyle = t.cooldown > t.def.rate * 0.5 ? '#f00' : '#0f0';
     ctx.beginPath(); ctx.arc(-5, -5, 1, 0, Math.PI*2); ctx.fill();
-
     ctx.restore();
 
   } else if (id === 'tesla') {
-    // --- TESLA COIL: tall coil with arcing electricity ---
-    // Base with transformer
     ctx.fillStyle = '#2a3a3a';
     ctx.fillRect(-10, -2, 20, 10);
     ctx.strokeStyle = '#4a6a6a';
     ctx.lineWidth = 1;
     ctx.strokeRect(-10, -2, 20, 10);
-
-    // Transformer coils on base
     ctx.fillStyle = '#3a4a4a';
     ctx.beginPath(); ctx.arc(-5, 4, 4, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(5, 4, 4, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#5a7a7a';
     ctx.beginPath(); ctx.arc(-5, 4, 4, 0, Math.PI*2); ctx.stroke();
     ctx.beginPath(); ctx.arc(5, 4, 4, 0, Math.PI*2); ctx.stroke();
-
-    // Central pillar
     ctx.fillStyle = '#3a4a4a';
     ctx.fillRect(-3, -14, 6, 14);
-
-    // Coil windings
     ctx.strokeStyle = '#6af';
     ctx.lineWidth = 1.2;
     for (let i = 0; i < 8; i++) {
@@ -921,15 +946,11 @@ function drawTower(t) {
       ctx.moveTo(-w, yy); ctx.lineTo(w, yy);
       ctx.stroke();
     }
-
-    // Top electrode
     let tPulse = Math.sin(gameTime * 0.12) * 0.3 + 0.7;
     ctx.fillStyle = hexColor('#8ff', tPulse);
     ctx.beginPath(); ctx.arc(0, -16, 4, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(0, -16, 2, 0, Math.PI*2); ctx.fill();
-
-    // Ambient sparks
     if (Math.random() < 0.3) {
       ctx.strokeStyle = hexColor('#8ff', 0.6);
       ctx.lineWidth = 1;
@@ -939,8 +960,6 @@ function drawTower(t) {
       ctx.lineTo(Math.cos(sa)*10 + (Math.random()-0.5)*6, -16 + Math.sin(sa)*10 + (Math.random()-0.5)*6);
       ctx.stroke();
     }
-
-    // Chain lightning effect
     if (t.chainTimer > 0 && t.chainTargets) {
       ctx.strokeStyle = '#8ff';
       ctx.lineWidth = 2;
@@ -968,8 +987,6 @@ function drawTower(t) {
     }
 
   } else if (id === 'cryo') {
-    // --- CRYO CANNON: freezing weapon with coolant tanks ---
-    // Coolant tanks on sides
     ctx.fillStyle = '#1a3a4a';
     ctx.beginPath(); ctx.arc(-10, 0, 5, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(10, 0, 5, 0, Math.PI*2); ctx.fill();
@@ -977,36 +994,24 @@ function drawTower(t) {
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(-10, 0, 5, 0, Math.PI*2); ctx.stroke();
     ctx.beginPath(); ctx.arc(10, 0, 5, 0, Math.PI*2); ctx.stroke();
-
-    // Tank bands
     ctx.strokeStyle = '#5a8aaa';
     ctx.lineWidth = 0.8;
     ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(-10, 3); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(10, -3); ctx.lineTo(10, 3); ctx.stroke();
-
-    // Coolant pipes connecting to center
     ctx.strokeStyle = '#3a7a9a';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(-2, -3); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(2, -3); ctx.stroke();
-
-    // Central housing
     ctx.fillStyle = '#2a4a5a';
     ctx.fillRect(-6, -8, 12, 8);
     ctx.strokeStyle = '#4a7a9a';
     ctx.lineWidth = 1;
     ctx.strokeRect(-6, -8, 12, 8);
-
-    // Frost buildup effect
     let frostPulse = Math.sin(gameTime * 0.06) * 0.3 + 0.5;
     ctx.fillStyle = hexColor('#aef', frostPulse * 0.3);
     ctx.beginPath(); ctx.arc(0, -4, 8, 0, Math.PI*2); ctx.fill();
-
-    // Rotating nozzle
     ctx.save();
     ctx.rotate(t.angle);
-
-    // Nozzle housing
     ctx.fillStyle = '#3a5a6a';
     ctx.beginPath();
     ctx.moveTo(-5, -4); ctx.lineTo(10, -3);
@@ -1017,8 +1022,6 @@ function drawTower(t) {
     ctx.strokeStyle = '#5a8a9a';
     ctx.lineWidth = 0.8;
     ctx.stroke();
-
-    // Wide nozzle tip (spray pattern)
     ctx.fillStyle = '#4a6a7a';
     ctx.beginPath();
     ctx.moveTo(12, -5); ctx.lineTo(18, -7);
@@ -1027,8 +1030,6 @@ function drawTower(t) {
     ctx.fill();
     ctx.strokeStyle = '#6a9aaa';
     ctx.stroke();
-
-    // Ice crystals at tip
     if (flash) {
       ctx.fillStyle = '#cef';
       ctx.shadowColor = '#6ef';
@@ -1045,16 +1046,11 @@ function drawTower(t) {
       }
       ctx.shadowBlur = 0;
     }
-
-    // Gauge on side
     ctx.fillStyle = '#1a2a3a';
     ctx.fillRect(-4, -4, 3, 3);
     ctx.fillStyle = '#6ef';
     ctx.fillRect(-3.5, -3.5 + (1 - frostPulse)*2, 2, frostPulse*2);
-
     ctx.restore();
-
-    // Temperature warning light
     ctx.fillStyle = t.cooldown > 0 ? '#48f' : '#6ef';
     ctx.shadowColor = '#6ef';
     ctx.shadowBlur = 4;
@@ -1062,8 +1058,6 @@ function drawTower(t) {
     ctx.shadowBlur = 0;
 
   } else if (id === 'missile') {
-    // --- MISSILE BATTERY: quad launcher with radar ---
-    // Heavy armored base
     ctx.fillStyle = '#3a2a1a';
     ctx.beginPath();
     ctx.moveTo(-14, -4); ctx.lineTo(14, -4);
@@ -1073,20 +1067,14 @@ function drawTower(t) {
     ctx.strokeStyle = '#5a4a3a';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Ammo storage
     ctx.fillStyle = '#2a1a0a';
     ctx.fillRect(-12, 2, 10, 5);
     ctx.fillRect(2, 2, 10, 5);
     ctx.strokeStyle = '#4a3a2a';
     ctx.strokeRect(-12, 2, 10, 5);
     ctx.strokeRect(2, 2, 10, 5);
-
-    // Rotating launcher assembly
     ctx.save();
     ctx.rotate(t.angle);
-
-    // Launcher frame
     ctx.fillStyle = '#4a3020';
     ctx.beginPath();
     ctx.moveTo(-8, -8); ctx.lineTo(10, -7);
@@ -1096,8 +1084,6 @@ function drawTower(t) {
     ctx.strokeStyle = '#6a5040';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Four missile tubes
     ctx.fillStyle = '#3a2518';
     let tubePositions = [[-4,-5],[-4,1],[3,-5],[3,1]];
     tubePositions.forEach(([tx,ty]) => {
@@ -1105,8 +1091,6 @@ function drawTower(t) {
       ctx.strokeStyle = '#5a4030';
       ctx.strokeRect(tx, ty, 8, 4);
     });
-
-    // Missile tips visible in tubes
     let missilesLoaded = t.cooldown < t.def.rate * 0.3;
     if (missilesLoaded) {
       ctx.fillStyle = '#f92';
@@ -1119,44 +1103,31 @@ function drawTower(t) {
         ctx.fill();
       });
     }
-
     if (flash) {
       ctx.fillStyle = '#fa0';
       ctx.shadowColor = '#f60';
       ctx.shadowBlur = 15;
       ctx.beginPath(); ctx.arc(10, 0, 5, 0, Math.PI*2); ctx.fill();
       ctx.shadowBlur = 0;
-      // Exhaust
       ctx.fillStyle = hexColor('#ff8', 0.5);
       ctx.beginPath(); ctx.arc(12, 0, 3, 0, Math.PI*2); ctx.fill();
     }
-
     ctx.restore();
-
-    // Radar dish on top
     ctx.save();
     ctx.translate(0, -8);
     let radarAngle = gameTime * 0.04;
     ctx.rotate(radarAngle);
-
-    // Dish
     ctx.strokeStyle = '#7a6a5a';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(0, 0, 6, -0.8, 0.8);
     ctx.stroke();
-
-    // Dish arm
     ctx.strokeStyle = '#5a4a3a';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(5, 0); ctx.stroke();
-
-    // Center hub
     ctx.fillStyle = '#6a5a4a';
     ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI*2); ctx.fill();
     ctx.restore();
-
-    // Radar sweep glow
     ctx.fillStyle = hexColor('#f92', 0.15);
     ctx.beginPath();
     ctx.moveTo(0, -8);
@@ -1164,8 +1135,6 @@ function drawTower(t) {
     ctx.arc(0, -8, 12, rsa - 0.4, rsa);
     ctx.closePath();
     ctx.fill();
-
-    // Status LEDs
     ctx.fillStyle = t.cooldown > t.def.rate * 0.5 ? '#f00' : '#0f0';
     ctx.beginPath(); ctx.arc(-6, -5, 1, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#f92';
@@ -1189,14 +1158,10 @@ function drawRobot(e) {
   ctx.translate(cx, cy);
 
   if (name === 'Scout') {
-    // Small bipedal scout robot - chicken walker style
     let legSwing = Math.sin(walk) * 0.4;
     let bodyBob = Math.abs(Math.sin(walk)) * 1.5;
-
-    // Legs
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 2;
-    // Left leg
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(-3, 2 - bodyBob);
@@ -1204,19 +1169,14 @@ function drawRobot(e) {
     ctx.lineTo(-3, 10);
     ctx.stroke();
     ctx.restore();
-    // Right leg
     ctx.beginPath();
     ctx.moveTo(3, 2 - bodyBob);
     ctx.lineTo(5, 7 + Math.sin(walk + Math.PI)*2);
     ctx.lineTo(3, 10);
     ctx.stroke();
-
-    // Feet
     ctx.fillStyle = '#666';
     ctx.fillRect(-5, 9 + Math.sin(walk)*2, 4, 2);
     ctx.fillRect(2, 9 + Math.sin(walk+Math.PI)*2, 4, 2);
-
-    // Body
     ctx.fillStyle = '#922';
     ctx.beginPath();
     ctx.moveTo(-5, -3 - bodyBob);
@@ -1228,20 +1188,14 @@ function drawRobot(e) {
     ctx.strokeStyle = '#c44';
     ctx.lineWidth = 0.8;
     ctx.stroke();
-
-    // Head / sensor
     ctx.fillStyle = '#a33';
     ctx.fillRect(-4, -7 - bodyBob, 8, 4);
-    // Visor
     ctx.fillStyle = slowed ? '#ff0' : '#f00';
     ctx.fillRect(-3, -6 - bodyBob, 6, 2);
-    // Eye glow
     ctx.shadowColor = slowed ? '#ff0' : '#f00';
     ctx.shadowBlur = 4;
     ctx.fillRect(-3, -6 - bodyBob, 6, 2);
     ctx.shadowBlur = 0;
-
-    // Antenna
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, -7 - bodyBob); ctx.lineTo(0, -11 - bodyBob); ctx.stroke();
@@ -1249,13 +1203,9 @@ function drawRobot(e) {
     ctx.beginPath(); ctx.arc(0, -11 - bodyBob, 1, 0, Math.PI*2); ctx.fill();
 
   } else if (name === 'Soldier') {
-    // Medium humanoid combat robot
     let legSwing = Math.sin(walk) * 0.5;
     let bodyBob = Math.abs(Math.sin(walk)) * 1;
-
-    // Legs - armored
     ctx.fillStyle = '#885500';
-    // Left leg
     ctx.save();
     ctx.translate(-4, 3 - bodyBob);
     ctx.rotate(legSwing);
@@ -1263,16 +1213,14 @@ function drawRobot(e) {
     ctx.fillStyle = '#664400';
     ctx.fillRect(-2.5, 7, 5, 3);
     ctx.restore();
-    // Right leg
     ctx.save();
     ctx.translate(4, 3 - bodyBob);
     ctx.rotate(-legSwing);
+    ctx.fillStyle = '#885500';
     ctx.fillRect(-2, 0, 4, 8);
     ctx.fillStyle = '#664400';
     ctx.fillRect(-2.5, 7, 5, 3);
     ctx.restore();
-
-    // Torso - armored plates
     ctx.fillStyle = '#996600';
     ctx.beginPath();
     ctx.moveTo(-7, -4 - bodyBob); ctx.lineTo(7, -4 - bodyBob);
@@ -1282,63 +1230,44 @@ function drawRobot(e) {
     ctx.strokeStyle = '#bb8800';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Chest plate detail
     ctx.fillStyle = '#774400';
     ctx.fillRect(-4, -2 - bodyBob, 8, 3);
     ctx.strokeStyle = '#aa7700';
     ctx.strokeRect(-4, -2 - bodyBob, 8, 3);
-
-    // Arms with gun
     ctx.fillStyle = '#885500';
     ctx.fillRect(-10, -3 - bodyBob, 4, 6);
     ctx.fillRect(6, -3 - bodyBob, 4, 6);
-    // Weapon in right hand
     ctx.fillStyle = '#555';
     ctx.fillRect(9, -2 - bodyBob, 5, 2);
-
-    // Head
     ctx.fillStyle = '#885500';
     ctx.fillRect(-5, -9 - bodyBob, 10, 5);
-    // Face plate
     ctx.fillStyle = '#663300';
     ctx.fillRect(-4, -8 - bodyBob, 8, 3);
-    // Eyes
     ctx.fillStyle = slowed ? '#ff0' : '#fa0';
     ctx.shadowColor = slowed ? '#ff0' : '#fa0';
     ctx.shadowBlur = 4;
     ctx.fillRect(-3, -7 - bodyBob, 2, 1.5);
     ctx.fillRect(1, -7 - bodyBob, 2, 1.5);
     ctx.shadowBlur = 0;
-
-    // Shoulder pads
     ctx.fillStyle = '#aa7700';
     ctx.beginPath(); ctx.arc(-8, -4 - bodyBob, 3, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(8, -4 - bodyBob, 3, 0, Math.PI*2); ctx.fill();
 
   } else if (name === 'Tank') {
-    // Tracked tank robot - treads + turret
     let rumble = Math.sin(gameTime * 0.3) * 0.5;
-
-    // Treads
     ctx.fillStyle = '#444';
     ctx.fillRect(-13, 4, 26, 6);
     ctx.fillStyle = '#333';
-    // Track segments
     for (let i = 0; i < 7; i++) {
       ctx.fillRect(-12 + i*4, 4.5, 2, 5);
     }
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 1;
     ctx.strokeRect(-13, 4, 26, 6);
-
-    // Wheels
     ctx.fillStyle = '#555';
     ctx.beginPath(); ctx.arc(-10, 7, 2.5, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(10, 7, 2.5, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(0, 7, 2, 0, Math.PI*2); ctx.fill();
-
-    // Hull
     ctx.fillStyle = '#733';
     ctx.beginPath();
     ctx.moveTo(-12, 4); ctx.lineTo(-10, -3 + rumble);
@@ -1348,12 +1277,8 @@ function drawRobot(e) {
     ctx.strokeStyle = '#944';
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Armor plates
     ctx.fillStyle = '#622';
     ctx.fillRect(-8, -1 + rumble, 16, 3);
-
-    // Turret (rotates toward path direction)
     ctx.save();
     ctx.translate(0, -4 + rumble);
     ctx.rotate(facing);
@@ -1363,19 +1288,14 @@ function drawRobot(e) {
     ctx.fill();
     ctx.strokeStyle = '#a66';
     ctx.stroke();
-    // Cannon barrel
     ctx.fillStyle = '#655';
     ctx.fillRect(4, -2, 10, 4);
     ctx.fillStyle = '#533';
     ctx.fillRect(12, -2.5, 3, 5);
     ctx.restore();
-
-    // Reactive armor tiles
     ctx.fillStyle = '#955';
     ctx.fillRect(-11, 0 + rumble, 3, 3);
     ctx.fillRect(8, 0 + rumble, 3, 3);
-
-    // Sensor
     ctx.fillStyle = slowed ? '#ff0' : '#f00';
     ctx.shadowColor = slowed ? '#ff0' : '#f00';
     ctx.shadowBlur = 3;
@@ -1383,26 +1303,18 @@ function drawRobot(e) {
     ctx.shadowBlur = 0;
 
   } else if (name === 'Drone') {
-    // Flying drone - quadcopter style
     let hover = Math.sin(gameTime * 0.15) * 3;
     let propSpin = gameTime * 0.8;
-
     ctx.translate(0, hover);
-
-    // Shadow on ground
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath();
     ctx.ellipse(0, 8 - hover, 6, 2, 0, 0, Math.PI*2);
     ctx.fill();
-
-    // Arms
     ctx.strokeStyle = '#336';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(8, -2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(-2, -6); ctx.lineTo(-2, 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(2, -6); ctx.lineTo(2, 2); ctx.stroke();
-
-    // Central body
     ctx.fillStyle = '#336';
     ctx.beginPath();
     ctx.moveTo(-3, -4); ctx.lineTo(3, -4);
@@ -1413,8 +1325,6 @@ function drawRobot(e) {
     ctx.strokeStyle = '#55a';
     ctx.lineWidth = 0.8;
     ctx.stroke();
-
-    // Propellers (spinning)
     ctx.strokeStyle = hexColor('#4af', 0.6);
     ctx.lineWidth = 1.5;
     [[-8,-2],[8,-2],[-2,-6],[2,2]].forEach(([px,py], i) => {
@@ -1423,52 +1333,37 @@ function drawRobot(e) {
       ctx.moveTo(px + Math.cos(a)*4, py + Math.sin(a)*1.5);
       ctx.lineTo(px - Math.cos(a)*4, py - Math.sin(a)*1.5);
       ctx.stroke();
-      // Prop disc
       ctx.strokeStyle = hexColor('#4af', 0.15);
       ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle = hexColor('#4af', 0.6);
     });
-
-    // Sensor eye
     ctx.fillStyle = slowed ? '#ff0' : '#4af';
     ctx.shadowColor = slowed ? '#ff0' : '#4af';
     ctx.shadowBlur = 6;
     ctx.beginPath(); ctx.arc(0, -1, 2, 0, Math.PI*2); ctx.fill();
     ctx.shadowBlur = 0;
-
-    // Camera lens
     ctx.fillStyle = '#112';
     ctx.beginPath(); ctx.arc(0, -1, 1, 0, Math.PI*2); ctx.fill();
 
   } else if (name === 'Mech') {
-    // Large bipedal mech - heavy armor + weapons
     let legSwing = Math.sin(walk) * 0.3;
     let bodyBob = Math.abs(Math.sin(walk)) * 2;
-
-    // Legs - heavy mechanical
     ctx.lineWidth = 3;
-    // Left leg
     ctx.save();
     ctx.translate(-6, 4 - bodyBob);
     ctx.rotate(legSwing);
-    // Upper leg
     ctx.fillStyle = '#636';
     ctx.fillRect(-3, 0, 6, 8);
-    // Knee joint
     ctx.fillStyle = '#858';
     ctx.beginPath(); ctx.arc(0, 8, 3, 0, Math.PI*2); ctx.fill();
-    // Lower leg
     ctx.fillStyle = '#525';
     ctx.fillRect(-3, 8, 6, 8);
-    // Foot
     ctx.fillStyle = '#747';
     ctx.beginPath();
     ctx.moveTo(-5, 16); ctx.lineTo(5, 16); ctx.lineTo(6, 18); ctx.lineTo(-6, 18);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-
-    // Right leg
     ctx.save();
     ctx.translate(6, 4 - bodyBob);
     ctx.rotate(-legSwing);
@@ -1484,8 +1379,6 @@ function drawRobot(e) {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-
-    // Torso
     ctx.fillStyle = '#747';
     ctx.beginPath();
     ctx.moveTo(-10, -6 - bodyBob); ctx.lineTo(10, -6 - bodyBob);
@@ -1495,8 +1388,6 @@ function drawRobot(e) {
     ctx.strokeStyle = '#969';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-
-    // Chest reactor
     ctx.fillStyle = hexColor('#f4f', 0.5 + Math.sin(gameTime*0.08)*0.3);
     ctx.beginPath(); ctx.arc(0, -1 - bodyBob, 4, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#c3c';
@@ -1504,48 +1395,36 @@ function drawRobot(e) {
     ctx.stroke();
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(0, -1 - bodyBob, 1.5, 0, Math.PI*2); ctx.fill();
-
-    // Shoulder-mounted weapons
-    // Left - missile pod
     ctx.fillStyle = '#636';
     ctx.fillRect(-14, -9 - bodyBob, 5, 6);
+    ctx.fillRect(9, -9 - bodyBob, 5, 6);
     ctx.fillStyle = '#444';
     for (let i = 0; i < 2; i++)
       for (let j = 0; j < 2; j++)
         ctx.fillRect(-13.5 + j*2.5, -8.5 + i*2.5 - bodyBob, 2, 2);
-
-    // Right - gatling gun
     ctx.fillStyle = '#636';
     ctx.fillRect(9, -9 - bodyBob, 5, 6);
     ctx.fillStyle = '#555';
     ctx.fillRect(13, -8 - bodyBob, 6, 1.5);
     ctx.fillRect(13, -6 - bodyBob, 6, 1.5);
-
-    // Head - cockpit style
     ctx.fillStyle = '#858';
     ctx.beginPath();
     ctx.moveTo(-5, -10 - bodyBob); ctx.lineTo(5, -10 - bodyBob);
     ctx.lineTo(4, -6 - bodyBob); ctx.lineTo(-4, -6 - bodyBob);
     ctx.closePath();
     ctx.fill();
-    // Visor
     ctx.fillStyle = slowed ? '#ff0' : '#f4f';
     ctx.shadowColor = slowed ? '#ff0' : '#f4f';
     ctx.shadowBlur = 6;
     ctx.fillRect(-4, -9 - bodyBob, 8, 2);
     ctx.shadowBlur = 0;
-
-    // Antenna array
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(-2, -10 - bodyBob); ctx.lineTo(-3, -14 - bodyBob); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(2, -10 - bodyBob); ctx.lineTo(3, -14 - bodyBob); ctx.stroke();
 
   } else if (name === 'Swarm') {
-    // Tiny spider bot - 6 legs
     let scurry = walk * 2;
-
-    // Legs
     ctx.strokeStyle = '#484';
     ctx.lineWidth = 1;
     for (let i = 0; i < 6; i++) {
@@ -1559,8 +1438,6 @@ function drawRobot(e) {
       ctx.lineTo(Math.cos(angle) * legLen, Math.sin(angle) * legLen + 1);
       ctx.stroke();
     }
-
-    // Body
     ctx.fillStyle = '#4a4';
     ctx.beginPath();
     ctx.ellipse(0, 0, 4, 3, 0, 0, Math.PI * 2);
@@ -1568,14 +1445,10 @@ function drawRobot(e) {
     ctx.strokeStyle = '#6c6';
     ctx.lineWidth = 0.5;
     ctx.stroke();
-
-    // Abdomen
     ctx.fillStyle = '#383';
     ctx.beginPath();
     ctx.ellipse(-2, 1, 2.5, 2, 0.3, 0, Math.PI * 2);
     ctx.fill();
-
-    // Eyes (multiple small ones)
     ctx.fillStyle = slowed ? '#ff0' : '#f00';
     ctx.shadowColor = slowed ? '#ff0' : '#f00';
     ctx.shadowBlur = 3;
@@ -1585,13 +1458,9 @@ function drawRobot(e) {
     ctx.shadowBlur = 0;
 
   } else if (name === 'Titan') {
-    // Massive quadruped siege robot
     let legSwing = Math.sin(walk) * 0.25;
     let bodyBob = Math.abs(Math.sin(walk)) * 2;
     let breathe = Math.sin(gameTime * 0.05) * 0.5;
-
-    // Four legs - thick mechanical
-    // Back left
     ctx.save();
     ctx.translate(-10, 6 - bodyBob);
     ctx.rotate(legSwing);
@@ -1603,7 +1472,6 @@ function drawRobot(e) {
     ctx.fillStyle = '#aaa';
     ctx.fillRect(-5, 17, 8, 3);
     ctx.restore();
-    // Back right
     ctx.save();
     ctx.translate(10, 6 - bodyBob);
     ctx.rotate(-legSwing);
@@ -1615,7 +1483,6 @@ function drawRobot(e) {
     ctx.fillStyle = '#aaa';
     ctx.fillRect(-3, 17, 8, 3);
     ctx.restore();
-    // Front left
     ctx.save();
     ctx.translate(-8, 2 - bodyBob);
     ctx.rotate(-legSwing);
@@ -1627,7 +1494,6 @@ function drawRobot(e) {
     ctx.fillStyle = '#bbb';
     ctx.fillRect(-4, 16, 7, 3);
     ctx.restore();
-    // Front right
     ctx.save();
     ctx.translate(8, 2 - bodyBob);
     ctx.rotate(legSwing);
@@ -1639,8 +1505,6 @@ function drawRobot(e) {
     ctx.fillStyle = '#bbb';
     ctx.fillRect(-3, 16, 7, 3);
     ctx.restore();
-
-    // Main body hull
     ctx.fillStyle = '#aaa';
     ctx.beginPath();
     ctx.moveTo(-14, -4 - bodyBob); ctx.lineTo(14, -4 - bodyBob);
@@ -1650,19 +1514,14 @@ function drawRobot(e) {
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-
-    // Armor plates
     ctx.fillStyle = '#999';
     ctx.fillRect(-12, -2 - bodyBob, 24, 3);
     ctx.fillRect(-12, 3 - bodyBob, 24, 3);
-    // Rivets
     ctx.fillStyle = '#bbb';
     for (let i = 0; i < 6; i++) {
       ctx.beginPath(); ctx.arc(-10 + i*4, -2 - bodyBob, 1, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(-10 + i*4, 6 - bodyBob, 1, 0, Math.PI*2); ctx.fill();
     }
-
-    // Reactor core
     ctx.fillStyle = hexColor('#fff', 0.4 + breathe * 0.3);
     ctx.shadowColor = '#fff';
     ctx.shadowBlur = 10;
@@ -1673,8 +1532,6 @@ function drawRobot(e) {
     ctx.stroke();
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(0, 1 - bodyBob, 2, 0, Math.PI*2); ctx.fill();
-
-    // Head - heavily armored
     ctx.fillStyle = '#bbb';
     ctx.beginPath();
     ctx.moveTo(-8, -10 - bodyBob); ctx.lineTo(8, -10 - bodyBob);
@@ -1683,28 +1540,20 @@ function drawRobot(e) {
     ctx.fill();
     ctx.strokeStyle = '#ddd';
     ctx.stroke();
-
-    // Main eye visor
     ctx.fillStyle = slowed ? '#ff0' : '#f44';
     ctx.shadowColor = slowed ? '#ff0' : '#f44';
     ctx.shadowBlur = 8;
     ctx.fillRect(-7, -9 - bodyBob, 14, 3);
     ctx.shadowBlur = 0;
-
-    // Eye segments
     ctx.fillStyle = '#200';
     ctx.fillRect(-3, -9 - bodyBob, 1, 3);
     ctx.fillRect(2, -9 - bodyBob, 1, 3);
-
-    // Shoulder cannons
     ctx.fillStyle = '#999';
     ctx.fillRect(-16, -8 - bodyBob, 5, 5);
     ctx.fillRect(11, -8 - bodyBob, 5, 5);
     ctx.fillStyle = '#777';
     ctx.fillRect(-17, -7 - bodyBob, 2, 3);
     ctx.fillRect(16, -7 - bodyBob, 2, 3);
-
-    // Horns / antenna
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(-6, -10 - bodyBob); ctx.lineTo(-8, -16 - bodyBob); ctx.stroke();
@@ -1716,7 +1565,6 @@ function drawRobot(e) {
 
   ctx.restore();
 
-  // HP bar (drawn after restore so it's not rotated)
   let bw = Math.max(s * 2.5, 16);
   let bh = 3;
   let bx = cx - bw/2;
@@ -1737,15 +1585,12 @@ function draw() {
   ctx.fillStyle = '#0a0a1a';
   ctx.fillRect(0, 0, C.width, C.height);
 
-  // Grid with subtle texture
   ctx.strokeStyle = '#151530';
   ctx.lineWidth = 0.5;
   for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,C.height); ctx.stroke(); }
   for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(C.width,y*TILE); ctx.stroke(); }
 
-  // Path with metallic look
   PATH.forEach(([c,r], idx) => {
-    // Base path
     let grd = ctx.createLinearGradient(c*TILE, r*TILE, c*TILE+TILE, r*TILE+TILE);
     grd.addColorStop(0, '#1a1a2e');
     grd.addColorStop(0.5, '#222240');
@@ -1753,7 +1598,6 @@ function draw() {
     ctx.fillStyle = grd;
     ctx.fillRect(c*TILE+1, r*TILE+1, TILE-2, TILE-2);
 
-    // Road markings
     if (idx % 4 === 0 && idx < PATH.length - 1) {
       let [nc,nr] = PATH[Math.min(idx+1, PATH.length-1)];
       if (nc !== c) {
@@ -1766,7 +1610,6 @@ function draw() {
     }
   });
 
-  // Path edges (border lines)
   ctx.strokeStyle = '#2a2a55';
   ctx.lineWidth = 1;
   PATH.forEach(([c,r]) => {
@@ -1780,7 +1623,6 @@ function draw() {
     if (rgt) { ctx.beginPath(); ctx.moveTo((c+1)*TILE, r*TILE); ctx.lineTo((c+1)*TILE, (r+1)*TILE); ctx.stroke(); }
   });
 
-  // Direction arrows
   ctx.fillStyle = '#2a2a4a';
   for (let i = 0; i < PATH.length - 1; i += 3) {
     let [c,r] = PATH[i];
@@ -1796,13 +1638,10 @@ function draw() {
     ctx.restore();
   }
 
-  // Mines
   mines.forEach(m => {
     ctx.save();
     ctx.translate(m.x, m.y);
-
     if (m.detonated) {
-      // Explosion flash
       let alpha = m.flashTimer / 12;
       ctx.fillStyle = hexColor('#f80', alpha * 0.6);
       ctx.beginPath(); ctx.arc(0, 0, MINE_DEF.splashRadius * alpha, 0, Math.PI*2); ctx.fill();
@@ -1812,22 +1651,14 @@ function draw() {
       ctx.restore();
       return;
     }
-
-    // Mine body - metallic disc
     let armPulse = m.armed ? Math.sin(gameTime * 0.15) * 0.3 + 0.7 : 0.3;
-
-    // Outer casing
     ctx.fillStyle = '#3a3a3a';
     ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-
-    // Pressure plate (top)
     ctx.fillStyle = '#4a4a4a';
     ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI*2); ctx.fill();
-
-    // Segmented plate lines
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 0.8;
     for (let i = 0; i < 4; i++) {
@@ -1837,30 +1668,21 @@ function draw() {
       ctx.lineTo(Math.cos(a)*7, Math.sin(a)*7);
       ctx.stroke();
     }
-
-    // Inner mechanism
     ctx.fillStyle = '#2a2a2a';
     ctx.beginPath(); ctx.arc(0, 0, 3.5, 0, Math.PI*2); ctx.fill();
-
-    // Detonator core
     ctx.fillStyle = m.armed ? hexColor('#f42', armPulse) : '#622';
     ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI*2); ctx.fill();
-
-    // Armed indicator glow
     if (m.armed) {
       ctx.shadowColor = '#f42';
       ctx.shadowBlur = 6 + armPulse * 4;
       ctx.fillStyle = hexColor('#f42', armPulse);
       ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI*2); ctx.fill();
       ctx.shadowBlur = 0;
-
-      // Blinking LED
       if (Math.sin(gameTime * 0.2) > 0) {
         ctx.fillStyle = '#f00';
         ctx.beginPath(); ctx.arc(5, -5, 1.2, 0, Math.PI*2); ctx.fill();
       }
     } else {
-      // Arming progress ring
       ctx.strokeStyle = '#f42';
       ctx.lineWidth = 1.5;
       let progress = 1 - (m.armTimer / 60);
@@ -1868,8 +1690,6 @@ function draw() {
       ctx.arc(0, 0, 10, -Math.PI/2, -Math.PI/2 + Math.PI*2*progress);
       ctx.stroke();
     }
-
-    // Warning triangles on edge
     ctx.fillStyle = '#aa0';
     for (let i = 0; i < 3; i++) {
       let a = (i/3)*Math.PI*2 - Math.PI/2;
@@ -1881,20 +1701,15 @@ function draw() {
       ctx.closePath();
       ctx.fill();
     }
-
     ctx.restore();
   });
 
-  // Towers
   towers.forEach(drawTower);
 
-  // Enemies (sorted by y for depth)
   let sortedEnemies = [...enemies].sort((a,b) => a.y - b.y);
   sortedEnemies.forEach(drawRobot);
 
-  // Bullets with trails
   bullets.forEach(b => {
-    // Trail
     b.trail.forEach(t => {
       ctx.globalAlpha = t.life / 8 * 0.5;
       ctx.fillStyle = b.color;
@@ -1904,14 +1719,12 @@ function draw() {
     });
     ctx.globalAlpha = 1;
 
-    // Main projectile
     ctx.fillStyle = b.color;
     ctx.shadowColor = b.color;
     ctx.shadowBlur = 8;
     ctx.beginPath();
 
     if (b.towerId === 'plasma') {
-      // Plasma ball
       ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
       ctx.fill();
       ctx.fillStyle = '#fff';
@@ -1919,7 +1732,6 @@ function draw() {
       ctx.arc(b.x, b.y, 1.5, 0, Math.PI*2);
       ctx.fill();
     } else if (b.towerId === 'rail') {
-      // Rail slug - elongated
       let angle = Math.atan2(b.ty - b.y, b.tx - b.x);
       ctx.save();
       ctx.translate(b.x, b.y);
@@ -1927,7 +1739,6 @@ function draw() {
       ctx.fillRect(-6, -2, 12, 4);
       ctx.restore();
     } else if (b.towerId === 'emp') {
-      // EMP pulse
       ctx.arc(b.x, b.y, 3, 0, Math.PI*2);
       ctx.fill();
       ctx.strokeStyle = hexColor('#ff0', 0.4);
@@ -1936,10 +1747,8 @@ function draw() {
       ctx.arc(b.x, b.y, 6, 0, Math.PI*2);
       ctx.stroke();
     } else if (b.towerId === 'cryo') {
-      // Cryo projectile - icy snowflake
       ctx.arc(b.x, b.y, 3.5, 0, Math.PI*2);
       ctx.fill();
-      // Ice crystal spikes
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       for (let i = 0; i < 6; i++) {
@@ -1952,21 +1761,17 @@ function draw() {
       ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(b.x, b.y, 1.5, 0, Math.PI*2); ctx.fill();
     } else if (b.towerId === 'missile') {
-      // Homing missile
       let a = b.angle !== undefined ? b.angle : Math.atan2(b.ty - b.y, b.tx - b.x);
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.rotate(a);
-      // Missile body
       ctx.fillStyle = '#ddd';
       ctx.fillRect(-5, -2, 8, 4);
-      // Nose cone
       ctx.fillStyle = '#f92';
       ctx.beginPath();
       ctx.moveTo(3, -2); ctx.lineTo(7, 0); ctx.lineTo(3, 2);
       ctx.closePath();
       ctx.fill();
-      // Fins
       ctx.fillStyle = '#999';
       ctx.beginPath();
       ctx.moveTo(-5, -2); ctx.lineTo(-7, -4); ctx.lineTo(-3, -2);
@@ -1976,7 +1781,6 @@ function draw() {
       ctx.moveTo(-5, 2); ctx.lineTo(-7, 4); ctx.lineTo(-3, 2);
       ctx.closePath();
       ctx.fill();
-      // Exhaust flame
       ctx.fillStyle = '#fa0';
       ctx.beginPath();
       ctx.moveTo(-5, -1.5); ctx.lineTo(-9 - Math.random()*3, 0); ctx.lineTo(-5, 1.5);
@@ -1984,14 +1788,12 @@ function draw() {
       ctx.fill();
       ctx.restore();
     } else {
-      // Default laser bolt
       ctx.arc(b.x, b.y, 2.5, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.shadowBlur = 0;
   });
 
-  // Particles
   particles.forEach(p => {
     ctx.globalAlpha = Math.min(1, p.life / 15);
     ctx.fillStyle = p.color;
@@ -2000,7 +1802,6 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  // Entry/exit markers
   ctx.fillStyle = '#0f04';
   ctx.fillRect(PATH[0][0]*TILE, PATH[0][1]*TILE, TILE, TILE);
   ctx.fillStyle = '#f004';
@@ -2013,7 +1814,6 @@ function draw() {
   ctx.fillStyle = '#f00';
   ctx.fillText('OUT', last[0]*TILE+8, last[1]*TILE+22);
 
-  // HUD
   document.getElementById('money').textContent = money;
   document.getElementById('wave').textContent = waveNum;
   document.getElementById('lives').textContent = lives;
@@ -2022,355 +1822,13 @@ function draw() {
 }
 
 function loop() {
-  if (lives > 0 && !mgActive) update();
+  if (lives > 0) update();
   draw();
   requestAnimationFrame(loop);
 }
+sizeCanvas();
+sizeCanvas();
 loop();
-
-// ============ MINI GAME: Robot Blaster ============
-let mgCanvas, mgCtx;
-let mgTime, mgKills, mgBonus, mgTargets, mgExplosions, mgMouseX, mgMouseY;
-let mgInterval = null;
-let mgCombo = 0, mgComboTimer = 0;
-
-function openMiniGame() {
-  if (waveActive) { showMsg("Can't play during a wave!"); return; }
-  mgActive = true;
-  mgKills = 0;
-  mgBonus = 0;
-  mgTime = 30 * 60; // 30 seconds at 60fps
-  mgTargets = [];
-  mgExplosions = [];
-  mgMouseX = 200;
-  mgMouseY = 200;
-  mgCombo = 0;
-  mgComboTimer = 0;
-
-  document.getElementById('mg-overlay').style.display = 'flex';
-  mgCanvas = document.getElementById('mg-canvas');
-  mgCanvas.width = 400;
-  mgCanvas.height = 400;
-  mgCtx = mgCanvas.getContext('2d');
-
-  mgCanvas.onmousemove = e => {
-    let r = mgCanvas.getBoundingClientRect();
-    mgMouseX = e.clientX - r.left;
-    mgMouseY = e.clientY - r.top;
-  };
-  mgCanvas.onclick = e => {
-    let r = mgCanvas.getBoundingClientRect();
-    let mx = e.clientX - r.left, my = e.clientY - r.top;
-    mgShoot(mx, my);
-  };
-
-  // Spawn initial targets
-  for (let i = 0; i < 5; i++) mgSpawnTarget();
-
-  if (mgInterval) clearInterval(mgInterval);
-  mgInterval = setInterval(mgUpdate, 1000/60);
-}
-
-function closeMiniGame() {
-  mgActive = false;
-  document.getElementById('mg-overlay').style.display = 'none';
-  if (mgInterval) { clearInterval(mgInterval); mgInterval = null; }
-  money += mgBonus;
-  if (mgBonus > 0) showMsg(`Mini game bonus: +$${mgBonus}!`);
-}
-
-function mgSpawnTarget() {
-  let types = [
-    { name:'Scout', color:'#f44', size:12, hp:1, points:5, speed:1.5 },
-    { name:'Soldier', color:'#fa0', size:16, hp:2, points:10, speed:1 },
-    { name:'Drone', color:'#4af', size:10, hp:1, points:8, speed:2.5 },
-    { name:'Tank', color:'#a44', size:22, hp:3, points:20, speed:0.6 },
-    { name:'Mech', color:'#f4f', size:26, hp:4, points:30, speed:0.4 },
-  ];
-  let t = types[Math.floor(Math.random() * types.length)];
-  // Spawn from edges
-  let side = Math.floor(Math.random() * 4);
-  let x, y, vx, vy;
-  if (side === 0) { x = -20; y = Math.random()*400; vx = t.speed; vy = (Math.random()-0.5)*t.speed; }
-  else if (side === 1) { x = 420; y = Math.random()*400; vx = -t.speed; vy = (Math.random()-0.5)*t.speed; }
-  else if (side === 2) { x = Math.random()*400; y = -20; vx = (Math.random()-0.5)*t.speed; vy = t.speed; }
-  else { x = Math.random()*400; y = 420; vx = (Math.random()-0.5)*t.speed; vy = -t.speed; }
-  mgTargets.push({ ...t, x, y, vx, vy, flash: 0 });
-}
-
-function mgShoot(mx, my) {
-  let hit = false;
-  for (let i = mgTargets.length - 1; i >= 0; i--) {
-    let t = mgTargets[i];
-    if (Math.hypot(t.x - mx, t.y - my) < t.size) {
-      t.hp--;
-      t.flash = 6;
-      if (t.hp <= 0) {
-        mgCombo++;
-        mgComboTimer = 90;
-        let comboMult = Math.min(mgCombo, 5);
-        let pts = t.points * comboMult;
-        mgKills++;
-        mgBonus += pts;
-        // Explosion
-        mgExplosions.push({ x: t.x, y: t.y, color: t.color, life: 20, size: t.size, combo: mgCombo, pts });
-        mgTargets.splice(i, 1);
-        mgSpawnTarget();
-        if (Math.random() < 0.3) mgSpawnTarget(); // bonus spawn
-      }
-      hit = true;
-      break;
-    }
-  }
-  if (!hit) {
-    mgCombo = 0;
-    // Miss spark
-    mgExplosions.push({ x: mx, y: my, color: '#555', life: 10, size: 5, combo: 0, pts: 0 });
-  }
-}
-
-function mgUpdate() {
-  mgTime--;
-  if (mgComboTimer > 0) mgComboTimer--;
-  if (mgComboTimer <= 0) mgCombo = 0;
-
-  if (mgTime <= 0) {
-    // Time up - auto close
-    closeMiniGame();
-    return;
-  }
-
-  // Move targets
-  mgTargets.forEach(t => {
-    t.x += t.vx;
-    t.y += t.vy;
-    if (t.flash > 0) t.flash--;
-    // Bounce off walls
-    if (t.x < -30 || t.x > 430) t.vx *= -1;
-    if (t.y < -30 || t.y > 430) t.vy *= -1;
-    // Slight random direction change
-    if (Math.random() < 0.02) { t.vx += (Math.random()-0.5)*0.5; t.vy += (Math.random()-0.5)*0.5; }
-  });
-
-  // Decay explosions
-  mgExplosions.forEach(e => e.life--);
-  mgExplosions = mgExplosions.filter(e => e.life > 0);
-
-  // Keep target count up
-  while (mgTargets.length < 4 + Math.floor((30*60 - mgTime)/(60*5))) {
-    mgSpawnTarget();
-  }
-
-  mgDraw();
-}
-
-function mgDraw() {
-  let c = mgCtx;
-  // Background - dark space with grid
-  c.fillStyle = '#060612';
-  c.fillRect(0, 0, 400, 400);
-
-  // Scanning grid
-  c.strokeStyle = '#111';
-  c.lineWidth = 0.5;
-  for (let x = 0; x < 400; x += 20) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,400); c.stroke(); }
-  for (let y = 0; y < 400; y += 20) { c.beginPath(); c.moveTo(0,y); c.lineTo(400,y); c.stroke(); }
-
-  // Radar sweep
-  let sweep = (mgTime * 0.02) % (Math.PI * 2);
-  c.fillStyle = 'rgba(255,150,30,0.04)';
-  c.beginPath();
-  c.moveTo(200, 200);
-  c.arc(200, 200, 250, sweep, sweep + 0.8);
-  c.closePath();
-  c.fill();
-
-  // Draw targets
-  mgTargets.forEach(t => {
-    c.save();
-    c.translate(t.x, t.y);
-
-    if (t.name === 'Scout') {
-      // Bipedal scout
-      let wb = Math.sin(mgTime * 0.1) * 2;
-      c.strokeStyle = '#888';
-      c.lineWidth = 1.5;
-      c.beginPath(); c.moveTo(-3, 4); c.lineTo(-5, 10+wb); c.lineTo(-3, 13); c.stroke();
-      c.beginPath(); c.moveTo(3, 4); c.lineTo(5, 10-wb); c.lineTo(3, 13); c.stroke();
-      c.fillStyle = t.flash > 0 ? '#fff' : '#922';
-      c.fillRect(-6, -5, 12, 10);
-      c.fillStyle = '#a33';
-      c.fillRect(-5, -9, 10, 5);
-      c.fillStyle = '#f00';
-      c.shadowColor = '#f00'; c.shadowBlur = 4;
-      c.fillRect(-4, -8, 8, 2);
-      c.shadowBlur = 0;
-    } else if (t.name === 'Soldier') {
-      let wb = Math.sin(mgTime * 0.08) * 1.5;
-      c.fillStyle = '#885500';
-      c.save(); c.translate(-5,5); c.rotate(Math.sin(mgTime*0.08)*0.3);
-      c.fillRect(-2,0,4,10); c.restore();
-      c.save(); c.translate(5,5); c.rotate(-Math.sin(mgTime*0.08)*0.3);
-      c.fillRect(-2,0,4,10); c.restore();
-      c.fillStyle = t.flash > 0 ? '#fff' : '#996600';
-      c.fillRect(-8, -6, 16, 12);
-      c.fillStyle = '#885500';
-      c.fillRect(-6, -11, 12, 6);
-      c.fillStyle = '#fa0';
-      c.shadowColor = '#fa0'; c.shadowBlur = 3;
-      c.fillRect(-4, -9, 3, 2); c.fillRect(1, -9, 3, 2);
-      c.shadowBlur = 0;
-      c.fillStyle = '#aa7700';
-      c.beginPath(); c.arc(-9,-5,3,0,Math.PI*2); c.fill();
-      c.beginPath(); c.arc(9,-5,3,0,Math.PI*2); c.fill();
-      c.fillStyle = '#555';
-      c.fillRect(10,-3,6,2);
-    } else if (t.name === 'Drone') {
-      let hov = Math.sin(mgTime * 0.15) * 3;
-      c.translate(0, hov);
-      c.fillStyle = 'rgba(0,0,0,0.15)';
-      c.beginPath(); c.ellipse(0, 10-hov, 8, 2, 0, 0, Math.PI*2); c.fill();
-      c.strokeStyle = '#336'; c.lineWidth = 2;
-      c.beginPath(); c.moveTo(-10,-2); c.lineTo(10,-2); c.stroke();
-      c.fillStyle = t.flash > 0 ? '#fff' : '#336';
-      c.beginPath();
-      c.moveTo(-4,-5); c.lineTo(4,-5); c.lineTo(5,0); c.lineTo(4,3); c.lineTo(-4,3); c.lineTo(-5,0);
-      c.closePath(); c.fill();
-      c.strokeStyle = 'rgba(70,170,255,0.4)'; c.lineWidth = 1;
-      [[-10,-2],[10,-2]].forEach(([px,py]) => {
-        c.beginPath(); c.arc(px,py,5,0,Math.PI*2); c.stroke();
-      });
-      c.fillStyle = '#4af'; c.shadowColor = '#4af'; c.shadowBlur = 6;
-      c.beginPath(); c.arc(0,-1,2.5,0,Math.PI*2); c.fill();
-      c.shadowBlur = 0;
-    } else if (t.name === 'Tank') {
-      let rum = Math.sin(mgTime * 0.3) * 0.5;
-      c.fillStyle = '#444';
-      c.fillRect(-16, 5, 32, 8);
-      c.fillStyle = '#333';
-      for (let i = 0; i < 8; i++) c.fillRect(-14+i*4, 5.5, 2, 7);
-      c.fillStyle = t.flash > 0 ? '#fff' : '#733';
-      c.beginPath();
-      c.moveTo(-14,5); c.lineTo(-12,-4+rum); c.lineTo(12,-4+rum); c.lineTo(14,5);
-      c.closePath(); c.fill();
-      c.fillStyle = '#844';
-      c.beginPath(); c.arc(0,-5+rum,7,0,Math.PI*2); c.fill();
-      c.fillStyle = '#655';
-      c.fillRect(5,-7+rum,12,4);
-      c.fillStyle = '#f00'; c.shadowColor = '#f00'; c.shadowBlur = 3;
-      c.beginPath(); c.arc(0,-6+rum,1.5,0,Math.PI*2); c.fill();
-      c.shadowBlur = 0;
-    } else if (t.name === 'Mech') {
-      let wb = Math.abs(Math.sin(mgTime*0.06))*2;
-      let ls = Math.sin(mgTime*0.06)*0.25;
-      c.save(); c.translate(-7,5-wb); c.rotate(ls);
-      c.fillStyle = '#636'; c.fillRect(-3,0,6,10);
-      c.fillStyle = '#858'; c.beginPath(); c.arc(0,10,3,0,Math.PI*2); c.fill();
-      c.fillStyle = '#525'; c.fillRect(-3,10,6,10);
-      c.fillStyle = '#747'; c.fillRect(-5,19,8,3);
-      c.restore();
-      c.save(); c.translate(7,5-wb); c.rotate(-ls);
-      c.fillStyle = '#636'; c.fillRect(-3,0,6,10);
-      c.fillStyle = '#858'; c.beginPath(); c.arc(0,10,3,0,Math.PI*2); c.fill();
-      c.fillStyle = '#525'; c.fillRect(-3,10,6,10);
-      c.fillStyle = '#747'; c.fillRect(-3,19,8,3);
-      c.restore();
-      c.fillStyle = t.flash > 0 ? '#fff' : '#747';
-      c.fillRect(-12,-8-wb,24,14);
-      c.strokeStyle = '#969'; c.lineWidth = 1.5; c.strokeRect(-12,-8-wb,24,14);
-      c.fillStyle = '#f4f'; c.shadowColor = '#f4f'; c.shadowBlur = 5;
-      c.beginPath(); c.arc(0,-2-wb,4,0,Math.PI*2); c.fill();
-      c.shadowBlur = 0;
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(0,-2-wb,1.5,0,Math.PI*2); c.fill();
-      c.fillStyle = '#858';
-      c.beginPath();
-      c.moveTo(-6,-12-wb); c.lineTo(6,-12-wb); c.lineTo(5,-8-wb); c.lineTo(-5,-8-wb);
-      c.closePath(); c.fill();
-      c.fillStyle = '#f4f'; c.shadowColor = '#f4f'; c.shadowBlur = 4;
-      c.fillRect(-5,-11-wb,10,2);
-      c.shadowBlur = 0;
-      c.fillStyle = '#636';
-      c.fillRect(-16,-10-wb,5,6);
-      c.fillRect(11,-10-wb,5,6);
-    }
-
-    c.restore();
-
-    // Target ring
-    c.strokeStyle = t.flash > 0 ? '#fff' : t.color + '60';
-    c.lineWidth = 1;
-    c.setLineDash([3,3]);
-    c.beginPath(); c.arc(t.x, t.y, t.size + 4, 0, Math.PI*2); c.stroke();
-    c.setLineDash([]);
-
-    // HP pips
-    for (let i = 0; i < t.hp; i++) {
-      c.fillStyle = '#0f0';
-      c.fillRect(t.x - t.size + i*6, t.y - t.size - 6, 4, 3);
-    }
-  });
-
-  // Explosions
-  mgExplosions.forEach(e => {
-    let a = e.life / 20;
-    c.globalAlpha = a;
-    // Expanding ring
-    c.strokeStyle = e.color;
-    c.lineWidth = 2;
-    c.beginPath(); c.arc(e.x, e.y, e.size * (1 + (1-a)*2), 0, Math.PI*2); c.stroke();
-    // Flash
-    c.fillStyle = e.color;
-    c.beginPath(); c.arc(e.x, e.y, e.size * a, 0, Math.PI*2); c.fill();
-    // Points text
-    if (e.pts > 0) {
-      c.fillStyle = '#ff0';
-      c.font = 'bold 12px Courier New';
-      c.fillText('+$' + e.pts, e.x + 10, e.y - 10 - (1-a)*20);
-      if (e.combo > 1) {
-        c.fillStyle = '#f92';
-        c.font = 'bold 10px Courier New';
-        c.fillText(e.combo + 'x COMBO', e.x + 10, e.y - 22 - (1-a)*20);
-      }
-    }
-    c.globalAlpha = 1;
-  });
-
-  // Crosshair
-  c.strokeStyle = '#0f0';
-  c.lineWidth = 1.5;
-  let cx = mgMouseX, cy = mgMouseY;
-  c.beginPath(); c.moveTo(cx-12,cy); c.lineTo(cx-5,cy); c.stroke();
-  c.beginPath(); c.moveTo(cx+5,cy); c.lineTo(cx+12,cy); c.stroke();
-  c.beginPath(); c.moveTo(cx,cy-12); c.lineTo(cx,cy-5); c.stroke();
-  c.beginPath(); c.moveTo(cx,cy+5); c.lineTo(cx,cy+12); c.stroke();
-  c.beginPath(); c.arc(cx,cy,3,0,Math.PI*2); c.stroke();
-
-  // Combo meter
-  if (mgCombo > 1) {
-    c.fillStyle = hexColor('#f92', mgComboTimer/90);
-    c.font = 'bold 16px Courier New';
-    c.fillText(mgCombo + 'x COMBO', 10, 25);
-  }
-
-  // Timer bar
-  let tFrac = mgTime / (30*60);
-  c.fillStyle = '#222';
-  c.fillRect(10, 385, 380, 6);
-  c.fillStyle = tFrac > 0.3 ? '#f92' : '#f22';
-  c.fillRect(10, 385, 380 * tFrac, 6);
-
-  // Warning when low time
-  if (mgTime < 5*60 && Math.sin(mgTime*0.3) > 0) {
-    c.fillStyle = '#f228';
-    c.font = 'bold 20px Courier New';
-    c.fillText('TIME LOW!', 140, 200);
-  }
-
-  // HUD
-  document.getElementById('mg-kills').textContent = mgKills;
-  document.getElementById('mg-time').textContent = Math.ceil(mgTime/60);
-  document.getElementById('mg-bonus').textContent = mgBonus;
-}
 
 </script>
 </body>
