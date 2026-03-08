@@ -25,7 +25,7 @@ body {
   height: 100vh;
   overflow: hidden;
   gap: 4px;
-  padding: 4px;
+  padding: 4px 6px 4px 4px;
 }
 canvas {
   display: block;
@@ -35,7 +35,13 @@ canvas {
   border: 1px solid #223;
   border-radius: 4px;
   cursor: crosshair;
-  align-self: center;
+}
+#canvas-wrap {
+  flex-shrink: 0;
+  overflow: hidden;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
 }
 #sidebar {
   flex: 1;
@@ -90,6 +96,8 @@ h1 {
   -webkit-tap-highlight-color: transparent;
   line-height: 1.3;
   min-height: 44px;
+  overflow: hidden;
+  word-break: break-word;
 }
 .tower-btn:active { border-color: #0ff; box-shadow: 0 0 8px #0ff4; }
 .tower-btn.selected { border-color: #0f0; box-shadow: 0 0 10px #0f04; background: #1a2a1a; }
@@ -183,7 +191,7 @@ h1 {
 </div>
 
 <div id="layout">
-  <canvas id="c"></canvas>
+  <div id="canvas-wrap"><canvas id="c"></canvas></div>
   <div id="sidebar">
     <h1>Future Defense</h1>
     <div id="hud">
@@ -217,15 +225,20 @@ const ctx = C.getContext('2d');
 function sizeCanvas() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const gap = 10;
-  const sidebarW = Math.min(Math.max(130, vw * 0.22), 220);
-  const availW = vw - sidebarW - gap;
-  const availH = vh - gap;
-  const scaleByW = availW / COLS;
-  const scaleByH = availH / ROWS;
-  const scale = Math.min(scaleByW, scaleByH);
-  C.style.width  = Math.floor(scale * COLS) + 'px';
-  C.style.height = Math.floor(scale * ROWS) + 'px';
+  const padding = 8;
+  // Sidebar is fixed narrow — 200px max
+  const sidebarW = Math.min(200, vw * 0.24);
+  const availH = vh - padding;
+  // Width-driven: fills horizontal space, clips bottom ~2 empty rows of grid
+  const scaleByW = (vw - sidebarW - padding) / COLS;
+  const scale = scaleByW;
+  const cssW = Math.floor(scale * COLS);
+  const cssH = Math.floor(scale * ROWS);
+  C.style.width  = cssW + 'px';
+  C.style.height = cssH + 'px';
+  // Set clip wrapper height to viewport
+  const wrap = document.getElementById('canvas-wrap');
+  if (wrap) wrap.style.height = availH + 'px';
 }
 window.addEventListener('resize', sizeCanvas);
 
@@ -233,23 +246,6 @@ const COLS = 20, ROWS = 14, TILE = 36;
 C.width = COLS * TILE;
 C.height = ROWS * TILE;
 
-function sizeCanvas() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const gap = 8; // layout gap + padding
-  // Sidebar needs enough space for 2-col shop grid
-  const sidebarW = Math.min(Math.max(130, vw * 0.22), 220);
-  const availW = vw - sidebarW - gap;
-  const availH = vh - gap;
-  const scaleByW = availW / COLS;
-  const scaleByH = availH / ROWS;
-  const scale = Math.min(scaleByW, scaleByH);
-  const cssW = Math.floor(scale * COLS);
-  const cssH = Math.floor(scale * ROWS);
-  C.style.width = cssW + 'px';
-  C.style.height = cssH + 'px';
-}
-window.addEventListener('resize', sizeCanvas);
 
 let gameTime = 0;
 let money = 200, lives = 20, waveNum = 0, score = 0;
@@ -1826,7 +1822,6 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
-sizeCanvas();
 sizeCanvas();
 loop();
 
