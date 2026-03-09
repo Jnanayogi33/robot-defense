@@ -43,7 +43,9 @@ export interface Tower {
   def: TowerDef;
   cooldown: number;
   angle: number;
+  targetAngle?: number;    // smooth rotation target
   fireFlash: number;
+  recoil?: number;         // recoil animation [0..1]
   fused?: boolean;
   chainTargets?: Enemy[];
   chainTimer?: number;
@@ -68,6 +70,7 @@ export interface Enemy {
   facing: number;
   done?: boolean;
   stunTimer?: number;  // EMP stun
+  hitFlash?: number;   // white flash on damage [0..4]
 }
 
 export interface EnemyTypeExt extends EnemyType {
@@ -151,6 +154,15 @@ export interface WaveDef {
   enemies: Array<{ type: string; count: number }>;
 }
 
+export interface FloatingText {
+  x: number;
+  y: number;
+  text: string;
+  life: number;
+  vy: number;
+  color: string;
+}
+
 export interface GameState {
   money: number;
   lives: number;
@@ -175,4 +187,6 @@ export interface GameState {
   placingMine: boolean;
   gameSpeed: number;
   hero: Hero | null;
+  floatingTexts: FloatingText[];
+  screenShake: number;
 }

@@ -4,7 +4,14 @@ import { COLS, ROWS, TILE, TOWER_DEFS, MINE_DEF, FUSION_DEFS, ENEMY_TYPES, PATH,
 import { spawnParticles, spawnDeathExplosion, spawnMineExplosion } from './particles';
 import { Sounds, Music } from './audio';
 import { TOWER_UPGRADES } from './data/tower-upgrades';
+import { TOWER_SPRITE_MAP } from './sprites';
 import type { TowerDef, Tower, Enemy } from './types';
+
+// ── SMOOTH ROTATION HELPER ────────────────────────────────────────────────
+export function lerpAngle(a: number, b: number, t: number): number {
+  const diff = ((b - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  return a + diff * t;
+}
 
 export const C = document.getElementById('c') as HTMLCanvasElement;
 export const ctx = C.getContext('2d') as CanvasRenderingContext2D;
@@ -228,6 +235,8 @@ export function restartGame(): void {
   s.particles = [];
   s.spawnQueue = [];
   s.mines = [];
+  s.floatingTexts = [];
+  s.screenShake = 0;
   s.waveActive = false;
   s.selectedTower = null;
   s.selling = false;
@@ -259,6 +268,7 @@ export function update(): void {
 
   s.enemies.forEach(e => {
     if (e.slowTimer > 0) e.slowTimer--;
+    if (e.hitFlash !== undefined && e.hitFlash > 0) e.hitFlash--;
     if (e.stunTimer !== undefined && e.stunTimer > 0) { e.stunTimer--; return; } // EMP stun
     const spd = e.speed * (e.slowTimer > 0 ? 0.4 : 1);
     e.walkCycle += spd * 0.15;
@@ -329,6 +339,10 @@ export function update(): void {
       s.money += e.reward;
       spawnDeathExplosion(e.x, e.y, e.type.color, e.type.size);
       Sounds.explode(e.type.size);
+      // Floating gold text on kill
+      s.floatingTexts.push({ x: e.x, y: e.y - e.type.size, text: `+$${e.reward}`, life: 45, vy: -1.2, color: '#f0c040' });
+      // Screen shake on boss death
+      if (e.type.size >= 18) s.screenShake = 10;
       if (e.reward >= 200) {
         s.overclockTimer = 600;
         showMsg('⚡ OVERCLOCK! Towers supercharged for 10s!');
@@ -363,6 +377,11 @@ export function update(): void {
 
   s.towers.forEach(t => {
     if (t.fireFlash > 0) t.fireFlash--;
+    if (t.recoil !== undefined && t.recoil > 0) t.recoil *= 0.82;
+    // Smooth angle interpolation toward target
+    if (t.targetAngle !== undefined) {
+      t.angle = lerpAngle(t.angle, t.targetAngle, 0.12);
+    }
     if (t.cooldown > 0) { t.cooldown--; return; }
     let best: Enemy | null = null;
     s.enemies.forEach(e => {
@@ -373,10 +392,11 @@ export function update(): void {
       if (d <= t.def.range && e.pathIdx > (best ? best.pathIdx : -1)) best = e;
     });
     if (!best) return;
-    t.angle = Math.atan2((best as Enemy).y - t.y, (best as Enemy).x - t.x);
+    t.targetAngle = Math.atan2((best as Enemy).y - t.y, (best as Enemy).x - t.x);
     t.cooldown = s.overclockTimer > 0 ? Math.max(1, Math.floor(t.def.rate / 2)) : t.def.rate;
     Sounds.shoot(t.def.id);
     t.fireFlash = 5;
+    t.recoil = 1.0;
 
     if (t.def.chain) {
       const targets: Enemy[] = [best as Enemy];
@@ -393,6 +413,7 @@ export function update(): void {
       }
       targets.forEach(tgt => {
         tgt.hp -= t.def.damage;
+        tgt.hitFlash = 4;
         spawnParticles(tgt.x, tgt.y, t.def.bulletColor, 3);
       });
       t.chainTargets = targets;
@@ -448,6 +469,7 @@ export function update(): void {
         const armored = (enemy.type as any).armored;
         const finalDmg = (armored && !b.ignorArmor) ? Math.floor(dmg * 0.5) : dmg;
         enemy.hp -= finalDmg;
+        enemy.hitFlash = 4; // white flash on hit
       }
       if (b.target && b.target.hp > 0) {
         applyDamage(b.target, b.damage);
@@ -480,6 +502,13 @@ export function update(): void {
 
   s.particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.vx *= 0.94; p.vy *= 0.94; p.vy += (p.gravity || 0); });
   s.particles = s.particles.filter(p => p.life > 0);
+
+  // Update floating texts
+  s.floatingTexts.forEach(ft => { ft.y += ft.vy; ft.life--; });
+  s.floatingTexts = s.floatingTexts.filter(ft => ft.life > 0);
+
+  // Decay screen shake
+  if (s.screenShake > 0) s.screenShake *= 0.82;
 
   if (s.waveActive && s.spawnQueue.length === 0 && s.enemies.length === 0) {
     s.waveActive = false;
@@ -629,22 +658,61 @@ export function closeUpgradePanel(): void {
   if (shop) shop.style.display = '';
 }
 
-// Build shop UI
+// Build shop UI with DALL-E sprites
 const shopEl = document.getElementById('shop')!;
-TOWER_DEFS.forEach(t => {
+
+function makeTowerCard(t: TowerDef, id: string, spriteName: string | null, color: string, name: string, cost: number, desc: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.className = 'tower-btn';
-  btn.innerHTML = `<div class="name">${t.name}</div><div class="cost">$${t.cost}</div><div class="desc">${t.desc}</div>`;
-  btn.onclick = () => { s.selling = false; s.placingMine = false; s.selectedTower = t; updateShopUI(); };
-  btn.dataset.id = t.id;
+  btn.dataset.id = id;
+
+  // Create sprite container + text layout
+  const spriteEl = document.createElement('div');
+  spriteEl.className = 'tower-btn-sprite';
+  spriteEl.style.cssText = `width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;background:${color}22;border:1px solid ${color}44;position:relative;`;
+
+  if (spriteName) {
+    // Use DALL-E sprite image in shop (looks great at ~42px in a card)
+    const img = document.createElement('img');
+    const base = (import.meta.env.BASE_URL || '/robot-defense/').replace(/\/$/, '');
+    img.src = `${base}/assets/sprites/${spriteName}.png`;
+    img.style.cssText = 'width:42px;height:42px;object-fit:cover;image-rendering:pixelated;';
+    img.onerror = () => {
+      // Fallback: colored circle
+      spriteEl.style.background = `radial-gradient(circle, ${color} 0%, ${color}33 100%)`;
+    };
+    spriteEl.appendChild(img);
+  } else {
+    spriteEl.style.background = `radial-gradient(circle, ${color} 0%, ${color}22 100%)`;
+  }
+
+  // Glow border on hover
+  const textEl = document.createElement('div');
+  textEl.className = 'tower-btn-text';
+  textEl.innerHTML = `
+    <div class="name" style="color:${color}">${name}</div>
+    <div class="cost">$${cost}</div>
+    <div class="desc">${desc}</div>
+  `;
+
+  btn.appendChild(spriteEl);
+  btn.appendChild(textEl);
+  btn.onclick = onClick;
+  return btn;
+}
+
+TOWER_DEFS.forEach(t => {
+  const spriteName = TOWER_SPRITE_MAP[t.id] ?? null;
+  const btn = makeTowerCard(t, t.id, spriteName, t.color, t.name, t.cost, t.desc,
+    () => { s.selling = false; s.placingMine = false; s.selectedTower = t; updateShopUI(); }
+  );
   shopEl.appendChild(btn);
 });
 
-const mineBtn = document.createElement('button');
-mineBtn.className = 'tower-btn';
-mineBtn.innerHTML = `<div class="name" style="color:#f42">${MINE_DEF.name}</div><div class="cost">$${MINE_DEF.cost}</div><div class="desc">${MINE_DEF.desc}</div>`;
-mineBtn.dataset.id = 'mine';
-mineBtn.onclick = () => { s.selling = false; s.selectedTower = null; s.placingMine = true; updateShopUI(); };
+const mineBtn = makeTowerCard(
+  {} as TowerDef, 'mine', null, '#f42', MINE_DEF.name, MINE_DEF.cost, MINE_DEF.desc,
+  () => { s.selling = false; s.selectedTower = null; s.placingMine = true; updateShopUI(); }
+);
 shopEl.appendChild(mineBtn);
 
 // Expose globals for HTML onclick handlers

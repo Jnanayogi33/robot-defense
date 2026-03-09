@@ -5,8 +5,20 @@ import { COLS, ROWS, TILE, PATH, pathSet } from './constants';
 import type { Tower, Enemy, Mine, Particle, Bullet } from './types';
 import { getSprite, TOWER_SPRITE_MAP, ENEMY_SPRITE_MAP } from './sprites';
 import { drawHero } from './hero';
+import { getWorldTheme } from './worldtheme';
+import { drawAmbient, updateAmbient } from './ambient';
 
 // ============ DRAW HELPERS ============
+function drawGroundShadow(x: number, y: number, radius: number): void {
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(x + radius * 0.15, y + radius * 0.4, radius * 0.85, radius * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function hexColor(hex: string, alpha: number): string {
   let r = parseInt(hex.slice(1,3),16)||parseInt(hex.slice(1,2),16)*17;
   let g = parseInt(hex.slice(3,5),16)||parseInt(hex.slice(2,3),16)*17;
@@ -24,53 +36,40 @@ function drawTower(t: Tower): void {
   let col = t.def.color;
   let flash = t.fireFlash > 0;
 
-  // Try sprite first
-  const spriteName = TOWER_SPRITE_MAP[id];
-  const sprite = spriteName ? getSprite(spriteName) : null;
-  if (sprite) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    // Draw sprite centered (scaled to TILE size)
-    const sz = TILE - 2;
-    if (flash) {
-      ctx.shadowColor = col;
-      ctx.shadowBlur = 16;
-    }
-    ctx.drawImage(sprite, -sz / 2, -sz / 2, sz, sz);
-    ctx.shadowBlur = 0;
-    
-    // Draw upgrade level glow ring
-    const level = t.level ?? 0;
-    if (level >= 1) {
-      const glowColor = level === 2
-        ? (t.upgradePath === 'A' ? '#ff88ff' : '#ffff44')
-        : '#88ff88';
-      const ringR = sz / 2 + 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
-      ctx.strokeStyle = glowColor;
-      ctx.lineWidth = 2;
-      ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 8;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      
-      // Level pips
-      for (let i = 0; i < level; i++) {
-        const angle = -Math.PI / 2 + (i * Math.PI / 4);
-        const px = Math.cos(angle) * (ringR + 5);
-        const py = Math.sin(angle) * (ringR + 5);
-        ctx.beginPath();
-        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = glowColor;
-        ctx.fill();
-      }
-    }
-    
-    ctx.restore();
-    return;
+  // Always use canvas drawing for in-game (crisp and readable at 36px grid)
+  // DALL-E sprites are shown in the shop sidebar instead
+
+  // Ground shadow under tower
+  drawGroundShadow(cx, cy + TILE * 0.15, TILE * 0.5);
+
+  // Tower foundation plate (metallic base ellipse)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = '#0d0d12';
+  ctx.beginPath(); ctx.ellipse(0, 6, TILE*0.44, TILE*0.18, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#2a2a35'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(0, 6, TILE*0.44, TILE*0.18, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#3a3a4a';
+  for (let b=0; b<4; b++) {
+    const a = (b/4)*Math.PI*2;
+    ctx.beginPath(); ctx.arc(Math.cos(a)*TILE*0.32, 6+Math.sin(a)*TILE*0.12, 1.2, 0, Math.PI*2); ctx.fill();
   }
-  // Fallback: canvas drawing
+  ctx.restore();
+
+  // Colored glow disc under tower (provides color identity and readability)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.30;
+  ctx.fillStyle = col;
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.arc(0, 0, TILE / 2 - 1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
   ctx.save();
   ctx.translate(cx, cy);
 
@@ -682,6 +681,33 @@ function drawTower(t: Tower): void {
   }
 
   ctx.restore();
+
+  // Upgrade level glow ring (drawn over canvas art)
+  const _level = t.level ?? 0;
+  if (_level >= 1) {
+    const glowColor = _level === 2
+      ? (t.upgradePath === 'A' ? '#ff88ff' : '#ffff44')
+      : '#88ff88';
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.beginPath();
+    ctx.arc(0, 0, TILE / 2 + 2, 0, Math.PI * 2);
+    ctx.strokeStyle = glowColor;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Level pips
+    for (let _i = 0; _i < _level; _i++) {
+      const _a = -Math.PI / 2 + (_i * Math.PI / 3);
+      ctx.beginPath();
+      ctx.arc(Math.cos(_a) * (TILE / 2 + 7), Math.sin(_a) * (TILE / 2 + 7), 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = glowColor;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 }
 
 // ============ DRAW ROBOTS ============
@@ -693,6 +719,9 @@ function drawRobot(e: Enemy): void {
   let walk = e.walkCycle;
   let facing = e.facing;
   let slowed = e.slowTimer > 0;
+
+  // Ground shadow under enemy
+  drawGroundShadow(cx, cy + sz * 0.3, sz);
 
   // Try sprite first
   const spriteName = ENEMY_SPRITE_MAP[name];
@@ -1241,22 +1270,86 @@ function drawRobot(e: Enemy): void {
 
 // ============ MAIN DRAW ============
 export function draw() {
-  ctx.fillStyle = '#060612';
+  const theme = getWorldTheme();
+  updateAmbient();
+
+  // ── BACKGROUND ──────────────────────────────────────────────────────────
+  ctx.fillStyle = theme.bgColor;
   ctx.fillRect(0, 0, C.width, C.height);
 
-  // Circuit board grid lines with dot accents
-  ctx.strokeStyle = '#0e0e28';
-  ctx.lineWidth = 0.5;
-  for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,C.height); ctx.stroke(); }
-  for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(C.width,y*TILE); ctx.stroke(); }
-  // Circuit dots at intersections
-  ctx.fillStyle = '#14143a';
-  for (let x = 0; x <= COLS; x+=2) for (let y = 0; y <= ROWS; y+=2) { ctx.beginPath(); ctx.arc(x*TILE,y*TILE,1.2,0,Math.PI*2); ctx.fill(); }
-  // Pulsing circuit lines (horizontal + vertical randomly placed)
-  ctx.strokeStyle = hexColor('#1a1a55', 0.5 + Math.sin(s.gameTime*0.03)*0.3);
-  ctx.lineWidth = 0.8;
-  [2,5,8,12,16,19].forEach(x=>{ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,C.height); ctx.stroke();});
-  [1,4,7,10,13].forEach(y=>{ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(C.width,y*TILE); ctx.stroke();});
+  // Ambient particles BEHIND everything
+  drawAmbient(ctx);
+
+  // ── BUILDABLE TILES (dark concrete with texture) ─────────────────────────
+  for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      if (pathSet.has(col + ',' + row)) continue;
+      const tx = col * TILE;
+      const ty = row * TILE;
+      // Base fill
+      ctx.fillStyle = theme.tileFill;
+      ctx.fillRect(tx, ty, TILE, TILE);
+      // Crosshatch texture
+      ctx.strokeStyle = theme.tileAccent;
+      ctx.lineWidth = 0.4;
+      for (let i = 0; i <= TILE; i += 6) {
+        ctx.beginPath(); ctx.moveTo(tx + i, ty); ctx.lineTo(tx + i, ty + TILE); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(tx, ty + i); ctx.lineTo(tx + TILE, ty + i); ctx.stroke();
+      }
+      // Deterministic rubble detail
+      if ((col * 7 + row * 13) % 5 === 0) {
+        ctx.fillStyle = theme.tileDetail;
+        ctx.beginPath(); ctx.arc(tx + TILE * 0.3, ty + TILE * 0.7, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(tx + TILE * 0.7, ty + TILE * 0.3, 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+      if ((col * 11 + row * 7) % 8 === 0) {
+        ctx.strokeStyle = theme.tileDetail; ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(tx + 4, ty + 8); ctx.lineTo(tx + 10, ty + TILE - 6); ctx.stroke();
+      }
+    }
+  }
+
+  // ── PATH TILES (glowing road) ───────────────────────────────────────────
+  PATH.forEach(([c, r]) => {
+    const tx = c * TILE, ty = r * TILE;
+    ctx.fillStyle = theme.pathFill;
+    ctx.fillRect(tx, ty, TILE, TILE);
+    ctx.fillStyle = theme.pathCenter;
+    ctx.fillRect(tx + 2, ty + 2, TILE - 4, TILE - 4);
+  });
+
+  // Path glow border
+  const borderPulse = 0.6 + Math.sin(s.gameTime * 0.04) * 0.4;
+  ctx.shadowColor = theme.pathBorder;
+  ctx.shadowBlur = 6 * borderPulse;
+  ctx.strokeStyle = theme.pathBorder;
+  ctx.lineWidth = 2;
+  PATH.forEach(([c, r]) => {
+    const top = !pathSet.has(c + ',' + (r - 1));
+    const bot = !pathSet.has(c + ',' + (r + 1));
+    const lft = !pathSet.has((c - 1) + ',' + r);
+    const rgt = !pathSet.has((c + 1) + ',' + r);
+    if (top) { ctx.beginPath(); ctx.moveTo(c*TILE, r*TILE); ctx.lineTo((c+1)*TILE, r*TILE); ctx.stroke(); }
+    if (bot) { ctx.beginPath(); ctx.moveTo(c*TILE, (r+1)*TILE); ctx.lineTo((c+1)*TILE, (r+1)*TILE); ctx.stroke(); }
+    if (lft) { ctx.beginPath(); ctx.moveTo(c*TILE, r*TILE); ctx.lineTo(c*TILE, (r+1)*TILE); ctx.stroke(); }
+    if (rgt) { ctx.beginPath(); ctx.moveTo((c+1)*TILE, r*TILE); ctx.lineTo((c+1)*TILE, (r+1)*TILE); ctx.stroke(); }
+  });
+  ctx.shadowBlur = 0;
+
+  // Directional arrows on path
+  ctx.fillStyle = theme.pathBorder;
+  ctx.globalAlpha = 0.55;
+  for (let i = 2; i < PATH.length - 2; i += 4) {
+    const [c, r] = PATH[i];
+    const [nc, nr] = PATH[Math.min(i + 1, PATH.length - 1)];
+    const ccx = c * TILE + TILE / 2, ccy = r * TILE + TILE / 2;
+    const angle = Math.atan2(nr - r, nc - c);
+    ctx.save();
+    ctx.translate(ccx, ccy); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(7,0); ctx.lineTo(-4,-4); ctx.lineTo(-2,0); ctx.lineTo(-4,4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
 
   PATH.forEach(([c,r], idx) => {
     let grd = ctx.createLinearGradient(c*TILE, r*TILE, c*TILE+TILE, r*TILE+TILE);
@@ -1309,6 +1402,9 @@ export function draw() {
     ctx.fill();
     ctx.restore();
   }
+
+  // ── AMBIENT PARTICLES (world atmosphere, drawn before gameplay objects) ───
+  updateAndDrawAmbient();
 
   s.mines.forEach(m => {
     ctx.save();

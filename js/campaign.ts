@@ -173,6 +173,7 @@ export function renderMapSelect(worldId: number): void {
 // ── LAUNCH MAP ────────────────────────────────────────────────────────────
 export function launchMap(m: MapDef): void {
   setCurrentMap(m);
+  setWorldTheme(m.world);
   const nameEl = document.getElementById('current-map-name');
   if (nameEl) nameEl.textContent = `Map ${m.id}: ${m.name}`;
   showScreen('screen-game');
@@ -247,6 +248,8 @@ function renderStars(current: number, max: number): string {
 }
 
 // ── INITIALIZE CAMPAIGN UI ────────────────────────────────────────────────
+import { setWorldTheme } from './worldtheme';
+
 export function initCampaignUI(): void {
   // Play button
   const playBtn = document.getElementById('play-btn');

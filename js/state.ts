@@ -1,5 +1,5 @@
 // state.ts — Shared mutable game state
-import type { Tower, Enemy, Bullet, Particle, Mine, TowerDef, GameState } from './types';
+import type { Tower, Enemy, Bullet, Particle, Mine, TowerDef, GameState, FloatingText } from './types';
 
 export const s: GameState = {
 
@@ -26,4 +26,6 @@ export const s: GameState = {
   placingMine: false,
   gameSpeed: 1,
   hero: null,
+  floatingTexts: [] as FloatingText[],
+  screenShake: 0,
 };
