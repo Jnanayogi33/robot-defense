@@ -9,36 +9,97 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<!-- Portrait warning -->
 <div id="portrait-warn">
   <div class="icon">📱↻</div>
   <p>ROTATE TO LANDSCAPE<br>TO PLAY</p>
 </div>
 
-<div id="layout">
-  <div id="canvas-wrap"><canvas id="c"></canvas></div>
-  <div id="sidebar">
-    <h1>Future Defense</h1>
-    <div id="hud">
-      <span>Credits: <span class="val" id="money">200</span></span>
-      <span>Wave: <span class="val" id="wave">0</span></span>
-      <span>Lives: <span class="val" id="lives">20</span></span>
-      <span>Score: <span class="val" id="score">0</span></span>
+<!-- ── SCREEN: MAIN MENU ─────────────────────────────────── -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-box">
+    <div class="game-logo">🤖</div>
+    <h1 class="game-title">FUTURE DEFENSE</h1>
+    <p class="game-subtitle">ROBOT UPRISING</p>
+    <button class="big-btn" id="play-btn">▶ PLAY</button>
+    <div class="menu-footer">
+      <button class="icon-btn" id="music-btn-menu" onclick="Music && Music.toggle()">🔊</button>
     </div>
-    <div id="shop"></div>
-    <div id="controls">
-      <button onclick="startWave()">▶ Next Wave</button>
-      <button onclick="sellMode()">💰 Sell</button>
-      <button onclick="toggleFuse()" id="fuse-btn">🔀 Fuse</button>
-      <button class="spd-btn selected" data-spd="1" onclick="setSpeed(1)">1×</button>
-      <button class="spd-btn" data-spd="2" onclick="setSpeed(2)">2×</button>
-      <button class="spd-btn" data-spd="5" onclick="setSpeed(5)">5×</button>
-      <button onclick="Music.toggle()" id="music-btn">🔊</button>
-    </div>
-    <div id="overclock-bar" style="display:none"><div id="overclock-fill"></div></div>
-    <div id="msg"></div>
   </div>
 </div>
 
+<!-- ── SCREEN: WORLD SELECT ──────────────────────────────── -->
+<div id="screen-world-select" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="back-to-menu">← MENU</button>
+    <h2>SELECT WORLD</h2>
+    <div id="total-stars-display">⭐ 0</div>
+  </div>
+  <div id="world-cards" class="cards-container"></div>
+</div>
+
+<!-- ── SCREEN: MAP SELECT ────────────────────────────────── -->
+<div id="screen-map-select" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="back-to-world">← WORLDS</button>
+    <h2 id="map-select-world-title">SELECT MAP</h2>
+  </div>
+  <div id="map-cards" class="cards-container"></div>
+  <div class="difficulty-bar">
+    <span>Difficulty:</span>
+    <button class="diff-btn" data-diff="Recruit">RECRUIT</button>
+    <button class="diff-btn selected" data-diff="Sergeant">SERGEANT</button>
+    <button class="diff-btn" data-diff="Commander">COMMANDER</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: GAME ──────────────────────────────────────── -->
+<div id="screen-game" class="screen">
+  <div id="layout">
+    <div id="canvas-wrap"><canvas id="c"></canvas></div>
+    <div id="sidebar">
+      <div id="map-info-bar">
+        <button class="back-btn small" id="back-to-map">⬅</button>
+        <span id="current-map-name">Map 1-1</span>
+      </div>
+      <div id="hud">
+        <span>💰 <span class="val" id="money">200</span></span>
+        <span>🌊 <span class="val" id="wave">0</span></span>
+        <span>❤️ <span class="val" id="lives">20</span></span>
+        <span>⭐ <span class="val" id="score">0</span></span>
+      </div>
+      <div id="shop"></div>
+      <div id="controls">
+        <button onclick="startWave()">▶ Next Wave</button>
+        <button onclick="sellMode()">💰 Sell</button>
+        <button onclick="toggleFuse()" id="fuse-btn">🔀 Fuse</button>
+        <button class="spd-btn selected" data-spd="1" onclick="setSpeed(1)">1×</button>
+        <button class="spd-btn" data-spd="2" onclick="setSpeed(2)">2×</button>
+        <button class="spd-btn" data-spd="5" onclick="setSpeed(5)">5×</button>
+        <button onclick="Music && Music.toggle()" id="music-btn">🔊</button>
+      </div>
+      <div id="overclock-bar" style="display:none"><div id="overclock-fill"></div></div>
+      <div id="msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: RESULTS ───────────────────────────────────── -->
+<div id="screen-results" class="screen">
+  <div class="results-box">
+    <h2 id="results-title">MISSION COMPLETE</h2>
+    <div id="results-stars" class="stars-display"></div>
+    <div id="results-stats" class="stats-grid"></div>
+    <div class="results-btns">
+      <button class="big-btn" id="results-next">NEXT MAP →</button>
+      <button class="big-btn secondary" id="results-retry">↺ RETRY</button>
+      <button class="big-btn secondary" id="results-menu">⌂ MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- Legacy game-over overlay (for in-game) -->
 <div id="overlay">
   <div id="overlay-box">
     <h2 id="ov-title"></h2>
@@ -46,6 +107,7 @@
     <button onclick="restartGame()">Play Again</button>
   </div>
 </div>
+
 <script type="module" src="/js/main.ts"></script>
 </body>
 </html>
