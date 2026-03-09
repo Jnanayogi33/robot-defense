@@ -37,7 +37,35 @@ function drawTower(t: Tower): void {
     }
     ctx.drawImage(sprite, -sz / 2, -sz / 2, sz, sz);
     ctx.shadowBlur = 0;
-    // Rotation indicator for aimed towers
+    
+    // Draw upgrade level glow ring
+    const level = t.level ?? 0;
+    if (level >= 1) {
+      const glowColor = level === 2
+        ? (t.upgradePath === 'A' ? '#ff88ff' : '#ffff44')
+        : '#88ff88';
+      const ringR = sz / 2 + 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Level pips
+      for (let i = 0; i < level; i++) {
+        const angle = -Math.PI / 2 + (i * Math.PI / 4);
+        const px = Math.cos(angle) * (ringR + 5);
+        const py = Math.sin(angle) * (ringR + 5);
+        ctx.beginPath();
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = glowColor;
+        ctx.fill();
+      }
+    }
+    
     ctx.restore();
     return;
   }

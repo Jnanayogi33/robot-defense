@@ -45,6 +45,11 @@ export interface Tower {
   fused?: boolean;
   chainTargets?: Enemy[];
   chainTimer?: number;
+  // Upgrade system
+  level?: number;           // 0 = base, 1 = L1, 2 = L2
+  upgradePath?: 'A' | 'B' | null;
+  baseCost?: number;        // Original purchase cost for sell calculation
+  upgradeGlow?: string;     // Glow color for upgrade visuals
 }
 
 export interface Enemy {

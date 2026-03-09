@@ -268,3 +268,55 @@ h1 {
 
 /* Ensure min tap targets */
 button { min-height: 44px; }
+
+/* ── UPGRADE PANEL ──────────────────────────────────────────────────────── */
+#upgrade-panel {
+  background: #0a0a1a;
+  border: 1px solid #0ff4;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.upg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.upg-level { color: #888; font-size: 11px; }
+.upg-range { color: #666; font-size: 11px; margin-bottom: 6px; }
+.upg-btn {
+  display: block;
+  width: 100%;
+  background: #0a2a2a;
+  border: 1px solid #0ff4;
+  color: #0ff;
+  padding: 6px 8px;
+  margin: 4px 0;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+  line-height: 1.4;
+  min-height: 44px;
+}
+.upg-btn:hover { border-color: #0ff; background: #0a3a3a; }
+.upg-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.upg-btn small { color: #888; }
+.upg-done { color: #4f4; font-size: 11px; padding: 4px 0; }
+.upg-footer { display: flex; gap: 4px; margin-top: 6px; }
+.upg-sell-btn, .upg-close-btn {
+  flex: 1;
+  background: #1a0a0a;
+  border: 1px solid #f444;
+  color: #f88;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  min-height: 44px;
+}
+.upg-close-btn { background: #0a0a1a; border-color: #444; color: #666; }
+.upg-sell-btn:hover { border-color: #f44; }
+.upg-close-btn:hover { border-color: #888; color: #aaa; }
+
+/* Level glow indicators */
+.tower-level-indicator { position: absolute; }

@@ -2,6 +2,7 @@
 import type { Tower, Enemy, Bullet, Particle, Mine, TowerDef, GameState } from './types';
 
 export const s: GameState = {
+
   money: 200,
   lives: 20,
   waveNum: 0,

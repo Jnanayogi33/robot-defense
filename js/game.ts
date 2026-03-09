@@ -3,6 +3,7 @@ import { s } from './state';
 import { COLS, ROWS, TILE, TOWER_DEFS, MINE_DEF, FUSION_DEFS, ENEMY_TYPES, PATH, pathSet } from './constants';
 import { spawnParticles, spawnDeathExplosion, spawnMineExplosion } from './particles';
 import { Sounds, Music } from './audio';
+import { TOWER_UPGRADES } from './data/tower-upgrades';
 import type { TowerDef, Tower, Enemy } from './types';
 
 export const C = document.getElementById('c') as HTMLCanvasElement;
@@ -140,12 +141,20 @@ function handleCanvasInteraction(e: MouseEvent | TouchEvent): void {
     return;
   }
 
+  // Tapping an existing tower opens upgrade panel
+  const existingTower = s.towers.find(t => t.col === col && t.row === row);
+  if (existingTower && !s.selling && !s.fuseMode && !s.placingMine) {
+    showUpgradePanel(existingTower);
+    return;
+  }
+
   if (!s.selectedTower) return;
   if (pathSet.has(col + ',' + row)) { showMsg("Can't build on the path!"); return; }
   if (s.towers.find(t => t.col === col && t.row === row)) { showMsg('Already occupied!'); return; }
   if (s.money < s.selectedTower.cost) { showMsg('Not enough credits!'); return; }
   s.money -= s.selectedTower.cost;
-  s.towers.push({ col, row, x: col * TILE + TILE / 2, y: row * TILE + TILE / 2, def: s.selectedTower, cooldown: 0, angle: 0, fireFlash: 0 });
+  const newTower: Tower = { col, row, x: col * TILE + TILE / 2, y: row * TILE + TILE / 2, def: { ...s.selectedTower }, cooldown: 0, angle: 0, fireFlash: 0, level: 0, upgradePath: null, baseCost: s.selectedTower.cost };
+  s.towers.push(newTower);
   Sounds.place();
 }
 
@@ -450,6 +459,124 @@ export function update(): void {
     if (overlay) overlay.classList.add('show');
   }
   if (s.msgTimer > 0) s.msgTimer--;
+}
+
+// ── UPGRADE PANEL ────────────────────────────────────────────────────────
+let selectedTowerInst: Tower | null = null;
+
+export function showUpgradePanel(tower: Tower): void {
+  selectedTowerInst = tower;
+  const upgrades = TOWER_UPGRADES[tower.def.id];
+  if (!upgrades) { closeUpgradePanel(); return; }
+
+  const panel = document.getElementById('upgrade-panel');
+  const shop = document.getElementById('shop');
+  const controls = document.getElementById('controls');
+
+  if (!panel) {
+    createUpgradePanel();
+    showUpgradePanel(tower);
+    return;
+  }
+
+  if (shop) shop.style.display = 'none';
+
+  const level = tower.level ?? 0;
+  const path = tower.upgradePath ?? null;
+
+  const l1 = upgrades.L1;
+  const l2a = upgrades.L2A;
+  const l2b = upgrades.L2B;
+
+  panel.innerHTML = `
+    <div class="upg-header">
+      <strong style="color:${tower.def.color}">${tower.def.name}</strong>
+      <span class="upg-level">Level ${level}/2 ${path ? `(${path})` : ''}</span>
+    </div>
+    <div class="upg-range">Range: ${tower.def.range} | DMG: ${tower.def.damage}</div>
+    ${level === 0 ? `
+      <button class="upg-btn ${s.money < l1.cost ? 'disabled' : ''}" id="upg-l1" ${s.money < l1.cost ? 'disabled' : ''}>
+        ⬆ ${l1.name}<br><small>$${l1.cost} — ${l1.desc}</small>
+      </button>
+    ` : '<div class="upg-done">✓ L1 Upgraded</div>'}
+    ${level >= 1 && path === null ? `
+      <button class="upg-btn ${s.money < l2a.cost ? 'disabled' : ''}" id="upg-l2a" ${s.money < l2a.cost ? 'disabled' : ''}>
+        🅰 ${l2a.name}<br><small>$${l2a.cost} — ${l2a.desc}</small>
+      </button>
+      <button class="upg-btn ${s.money < l2b.cost ? 'disabled' : ''}" id="upg-l2b" ${s.money < l2b.cost ? 'disabled' : ''}>
+        🅱 ${l2b.name}<br><small>$${l2b.cost} — ${l2b.desc}</small>
+      </button>
+    ` : ''}
+    ${level >= 2 ? `<div class="upg-done">✓ Fully Upgraded (${path})</div>` : ''}
+    <div class="upg-footer">
+      <button class="upg-sell-btn" id="upg-sell">💰 Sell ($${Math.floor((tower.baseCost ?? tower.def.cost) * 0.6)})</button>
+      <button class="upg-close-btn" id="upg-close">✕</button>
+    </div>
+  `;
+  panel.style.display = 'block';
+
+  const l1Btn = document.getElementById('upg-l1');
+  if (l1Btn) l1Btn.onclick = () => { buyUpgrade(tower, 'L1'); };
+  const l2aBtn = document.getElementById('upg-l2a');
+  if (l2aBtn) l2aBtn.onclick = () => { buyUpgrade(tower, 'L2A'); };
+  const l2bBtn = document.getElementById('upg-l2b');
+  if (l2bBtn) l2bBtn.onclick = () => { buyUpgrade(tower, 'L2B'); };
+  const sellBtn = document.getElementById('upg-sell');
+  if (sellBtn) sellBtn.onclick = () => {
+    const refund = Math.floor((tower.baseCost ?? tower.def.cost) * 0.6);
+    s.money += refund;
+    s.towers = s.towers.filter(t => t !== tower);
+    showMsg(`Sold for $${refund}`);
+    closeUpgradePanel();
+  };
+  const closeBtn = document.getElementById('upg-close');
+  if (closeBtn) closeBtn.onclick = () => closeUpgradePanel();
+}
+
+function buyUpgrade(tower: Tower, upgradeKey: 'L1' | 'L2A' | 'L2B'): void {
+  const upgrades = TOWER_UPGRADES[tower.def.id];
+  if (!upgrades) return;
+  const upgrade = upgrades[upgradeKey];
+  if (s.money < upgrade.cost) { showMsg('Not enough credits!'); return; }
+  s.money -= upgrade.cost;
+  
+  // Apply upgrade to a deep copy of the def
+  const newDef = { ...tower.def };
+  upgrade.apply(newDef);
+  tower.def = newDef;
+  
+  if (upgradeKey === 'L1') {
+    tower.level = 1;
+    tower.upgradeGlow = '#aaffaa';
+  } else if (upgradeKey === 'L2A') {
+    tower.level = 2;
+    tower.upgradePath = 'A';
+    tower.upgradeGlow = '#ffaaff';
+  } else {
+    tower.level = 2;
+    tower.upgradePath = 'B';
+    tower.upgradeGlow = '#ffffaa';
+  }
+  
+  showMsg(`${upgrade.name} upgraded!`);
+  Sounds.place();
+  showUpgradePanel(tower); // refresh
+}
+
+function createUpgradePanel(): void {
+  const panel = document.createElement('div');
+  panel.id = 'upgrade-panel';
+  panel.style.display = 'none';
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.insertBefore(panel, document.getElementById('controls'));
+}
+
+export function closeUpgradePanel(): void {
+  selectedTowerInst = null;
+  const panel = document.getElementById('upgrade-panel');
+  if (panel) panel.style.display = 'none';
+  const shop = document.getElementById('shop');
+  if (shop) shop.style.display = '';
 }
 
 // Build shop UI
