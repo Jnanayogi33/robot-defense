@@ -1,5 +1,11 @@
+// draw.ts — All drawing functions
+import { s } from './state';
+import { ctx, C } from './game';
+import { COLS, ROWS, TILE, PATH, pathSet } from './constants';
+import type { Tower, Enemy, Mine, Particle, Bullet } from './types';
+
 // ============ DRAW HELPERS ============
-function hexColor(hex, alpha) {
+function hexColor(hex: string, alpha: number): string {
   let r = parseInt(hex.slice(1,3),16)||parseInt(hex.slice(1,2),16)*17;
   let g = parseInt(hex.slice(3,5),16)||parseInt(hex.slice(2,3),16)*17;
   let b = parseInt(hex.slice(5,7),16)||parseInt(hex.slice(3,4),16)*17;
@@ -10,7 +16,7 @@ function hexColor(hex, alpha) {
 }
 
 // ============ DRAW TOWERS ============
-function drawTower(t) {
+function drawTower(t: Tower): void {
   let cx = t.x, cy = t.y;
   let id = t.def.id;
   let col = t.def.color;
@@ -113,7 +119,7 @@ function drawTower(t) {
       ctx.fillRect(-6 + i*5, -7.5, 2, 1.5);
       ctx.fillRect(-6 + i*5, 6, 2, 1.5);
     }
-    ctx.fillStyle = hexColor('#f0f', 0.3 + Math.sin(gameTime*0.1)*0.2);
+    ctx.fillStyle = hexColor('#f0f', 0.3 + Math.sin(s.gameTime*0.1)*0.2);
     ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
@@ -124,14 +130,14 @@ function drawTower(t) {
     ctx.fillRect(-6, -4, 12, 4);
     for (let i = 0; i < 3; i++) {
       let ry = -12 + i * 3;
-      let pulse = Math.sin(gameTime * 0.08 + i) * 0.3 + 0.7;
+      let pulse = Math.sin(s.gameTime * 0.08 + i) * 0.3 + 0.7;
       ctx.strokeStyle = hexColor('#ff0', pulse * 0.6);
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.ellipse(0, ry, 10 - i, 3, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    let empPulse = Math.sin(gameTime * 0.1) * 0.3 + 0.7;
+    let empPulse = Math.sin(s.gameTime * 0.1) * 0.3 + 0.7;
     ctx.fillStyle = hexColor('#ff0', empPulse);
     ctx.beginPath(); ctx.arc(0, -14, 5, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#aa0';
@@ -189,7 +195,7 @@ function drawTower(t) {
       ctx.strokeStyle = '#f84';
       ctx.lineWidth = 1.5;
       for (let i = 0; i < 4; i++) {
-        let a = (i/4)*Math.PI*2 + gameTime*0.3;
+        let a = (i/4)*Math.PI*2 + s.gameTime*0.3;
         ctx.beginPath();
         ctx.moveTo(22 + Math.cos(a)*3, Math.sin(a)*3);
         ctx.lineTo(22 + Math.cos(a)*8, Math.sin(a)*8);
@@ -227,7 +233,7 @@ function drawTower(t) {
       ctx.moveTo(-w, yy); ctx.lineTo(w, yy);
       ctx.stroke();
     }
-    let tPulse = Math.sin(gameTime * 0.12) * 0.3 + 0.7;
+    let tPulse = Math.sin(s.gameTime * 0.12) * 0.3 + 0.7;
     ctx.fillStyle = hexColor('#8ff', tPulse);
     ctx.beginPath(); ctx.arc(0, -16, 4, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#fff';
@@ -288,7 +294,7 @@ function drawTower(t) {
     ctx.strokeStyle = '#4a7a9a';
     ctx.lineWidth = 1;
     ctx.strokeRect(-6, -8, 12, 8);
-    let frostPulse = Math.sin(gameTime * 0.06) * 0.3 + 0.5;
+    let frostPulse = Math.sin(s.gameTime * 0.06) * 0.3 + 0.5;
     ctx.fillStyle = hexColor('#aef', frostPulse * 0.3);
     ctx.beginPath(); ctx.arc(0, -4, 8, 0, Math.PI*2); ctx.fill();
     ctx.save();
@@ -316,7 +322,7 @@ function drawTower(t) {
       ctx.shadowColor = '#6ef';
       ctx.shadowBlur = 12;
       for (let i = 0; i < 3; i++) {
-        let a = (i/3)*Math.PI*2 + gameTime*0.2;
+        let a = (i/3)*Math.PI*2 + s.gameTime*0.2;
         let r = 4 + Math.random()*3;
         ctx.beginPath();
         ctx.moveTo(18 + Math.cos(a)*r, Math.sin(a)*r);
@@ -396,7 +402,7 @@ function drawTower(t) {
     ctx.restore();
     ctx.save();
     ctx.translate(0, -8);
-    let radarAngle = gameTime * 0.04;
+    let radarAngle = s.gameTime * 0.04;
     ctx.rotate(radarAngle);
     ctx.strokeStyle = '#7a6a5a';
     ctx.lineWidth = 1.5;
@@ -412,7 +418,7 @@ function drawTower(t) {
     ctx.fillStyle = hexColor('#f92', 0.15);
     ctx.beginPath();
     ctx.moveTo(0, -8);
-    let rsa = gameTime * 0.04;
+    let rsa = s.gameTime * 0.04;
     ctx.arc(0, -8, 12, rsa - 0.4, rsa);
     ctx.closePath();
     ctx.fill();
@@ -446,7 +452,7 @@ function drawTower(t) {
     ctx.fillStyle='#2a2000'; ctx.fillRect(-3,-12,6,14);
     ctx.strokeStyle='#cc9900'; ctx.lineWidth=1.5;
     for(let i=0;i<5;i++){ctx.beginPath(); ctx.moveTo(-5+i*2,-10); ctx.lineTo(-5+i*2+1,-8); ctx.stroke();}
-    let spk=Math.sin(gameTime*0.15)*0.3+0.7;
+    let spk=Math.sin(s.gameTime*0.15)*0.3+0.7;
     ctx.fillStyle=hexColor('#ffcc00',spk); ctx.shadowColor='#ffcc00'; ctx.shadowBlur=flash?18:6+spk*4;
     ctx.beginPath(); ctx.arc(0,-13,5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
     if(Math.random()<0.5||flash){
@@ -460,7 +466,7 @@ function drawTower(t) {
     // Photon Blaster — sleek orange energy cannon
     ctx.fillStyle='#2a1500'; ctx.fillRect(-12,-2,24,10); ctx.strokeStyle='#4a3010'; ctx.lineWidth=1; ctx.strokeRect(-12,-2,24,10);
     ctx.fillStyle='#3a2010'; ctx.fillRect(-8,-8,16,6); ctx.strokeStyle='#5a3020'; ctx.strokeRect(-8,-8,16,6);
-    let ppulse=Math.sin(gameTime*0.1)*0.3+0.5;
+    let ppulse=Math.sin(s.gameTime*0.1)*0.3+0.5;
     ctx.fillStyle=hexColor('#ff9900',ppulse*0.4); ctx.beginPath(); ctx.arc(0,-5,6,0,Math.PI*2); ctx.fill();
     ctx.save(); ctx.rotate(t.angle);
     ctx.fillStyle='#3a2800';
@@ -478,7 +484,7 @@ function drawTower(t) {
 
   } else if (id === 'gravity') {
     // Gravity Well — purple vortex AOE tower
-    let gSpin = gameTime * 0.05;
+    let gSpin = s.gameTime * 0.05;
     ctx.fillStyle='#1a0a2a'; ctx.beginPath(); ctx.arc(0,0,14,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='#4422aa'; ctx.lineWidth=1.5; ctx.stroke();
     for(let ring=0;ring<3;ring++){
@@ -487,7 +493,7 @@ function drawTower(t) {
       ctx.lineWidth=1.5-ring*0.3;
       ctx.beginPath(); ctx.arc(0,0,r,gSpin+ring*0.8,(gSpin+ring*0.8)+Math.PI*1.5); ctx.stroke();
     }
-    let vpulse=Math.sin(gameTime*0.08)*0.3+0.7;
+    let vpulse=Math.sin(s.gameTime*0.08)*0.3+0.7;
     ctx.fillStyle=hexColor('#aa66ff',vpulse); ctx.shadowColor='#8844ff'; ctx.shadowBlur=12+vpulse*8;
     ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
     ctx.fillStyle='#cc99ff'; ctx.beginPath(); ctx.arc(0,0,2,0,Math.PI*2); ctx.fill();
@@ -502,7 +508,7 @@ function drawTower(t) {
     // Vortex Cannon — magenta spiral pierce AOE
     ctx.fillStyle='#2a001a'; ctx.fillRect(-14,-4,28,12); ctx.strokeStyle='#660044'; ctx.lineWidth=1; ctx.strokeRect(-14,-4,28,12);
     ctx.fillStyle='#1a0010'; ctx.fillRect(-10,-10,20,6); ctx.strokeStyle='#440033'; ctx.strokeRect(-10,-10,20,6);
-    let vspin=gameTime*0.08;
+    let vspin=s.gameTime*0.08;
     for(let i=0;i<3;i++){ctx.strokeStyle=hexColor('#ff44ff',0.4+i*0.2); ctx.lineWidth=1+i*0.5; ctx.beginPath(); ctx.arc(0,-7,5+i*2,vspin+i,vspin+i+Math.PI*1.6); ctx.stroke();}
     ctx.save(); ctx.rotate(t.angle);
     ctx.fillStyle='#3a0025';
@@ -518,7 +524,7 @@ function drawTower(t) {
     // Disruptor (Laser+EMP fusion) — yellow-green electric laser
     ctx.fillStyle='#2a2a00'; ctx.fillRect(-12,-4,24,12); ctx.strokeStyle='#6a6a10'; ctx.lineWidth=2; ctx.strokeRect(-12,-4,24,12);
     ctx.fillStyle='#1a1a00'; ctx.fillRect(-4,-14,8,10);
-    let dp=Math.sin(gameTime*0.1)*0.4+0.6;
+    let dp=Math.sin(s.gameTime*0.1)*0.4+0.6;
     for(let i=0;i<3;i++){ctx.strokeStyle=hexColor('#ddff00',dp*(0.5+i*0.15)); ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(0,-10,6+i*2,2+i,0,0,Math.PI*2); ctx.stroke();}
     ctx.fillStyle=hexColor('#ffff00',dp); ctx.shadowColor='#ffee00'; ctx.shadowBlur=8+dp*6;
     ctx.beginPath(); ctx.arc(0,-12,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
@@ -537,7 +543,7 @@ function drawTower(t) {
     ctx.fillStyle='#2a1020'; ctx.fillRect(-14,-4,28,12); ctx.strokeStyle='#5a2040'; ctx.lineWidth=1.5; ctx.strokeRect(-14,-4,28,12);
     ctx.fillStyle='#1a0818'; ctx.fillRect(-10,2,10,7); ctx.fillRect(0,2,10,7);
     [[-8,2],[2,2],[-8,6],[2,6]].forEach(([tx,ty])=>{ctx.strokeStyle='#6a3050'; ctx.lineWidth=1; ctx.strokeRect(tx,ty,8,4);});
-    let rpulse=Math.sin(gameTime*0.12)*0.3+0.7;
+    let rpulse=Math.sin(s.gameTime*0.12)*0.3+0.7;
     ctx.fillStyle=hexColor('#ff6600',rpulse*0.4); ctx.beginPath(); ctx.arc(-4,-3,8,0,Math.PI*2); ctx.fill();
     ctx.save(); ctx.rotate(t.angle);
     ctx.fillStyle='#3a1828';
@@ -548,7 +554,7 @@ function drawTower(t) {
     ctx.shadowColor='#ff6600'; ctx.shadowBlur=flash?18:8;
     ctx.beginPath(); ctx.arc(12,0,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
     ctx.restore();
-    let ra=gameTime*0.06; ctx.strokeStyle='#cc6688'; ctx.lineWidth=1;
+    let ra=s.gameTime*0.06; ctx.strokeStyle='#cc6688'; ctx.lineWidth=1;
     ctx.save(); ctx.translate(0,-8); ctx.rotate(ra);
     ctx.beginPath(); ctx.arc(0,0,6,-0.8,0.8); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(5,0); ctx.stroke();
@@ -561,10 +567,10 @@ function drawTower(t) {
       ctx.fillStyle='#1a3a5a';
       ctx.beginPath(); ctx.moveTo(sx-3,sy+12); ctx.lineTo(sx,sy); ctx.lineTo(sx+3,sy+12); ctx.closePath(); ctx.fill();
       ctx.strokeStyle='#4a8aaa'; ctx.lineWidth=1; ctx.stroke();
-      let cp=Math.sin(gameTime*0.08+i*1.2)*0.3+0.7;
+      let cp=Math.sin(s.gameTime*0.08+i*1.2)*0.3+0.7;
       ctx.fillStyle=hexColor('#00eeff',cp*0.6); ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fill();
     });
-    let azp=Math.sin(gameTime*0.1)*0.3+0.7;
+    let azp=Math.sin(s.gameTime*0.1)*0.3+0.7;
     ctx.fillStyle=hexColor('#00eeff',azp); ctx.shadowColor='#00eeff'; ctx.shadowBlur=10+azp*8;
     ctx.beginPath(); ctx.arc(0,-18,4,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
     if(Math.random()<0.3||flash){
@@ -601,7 +607,7 @@ function drawTower(t) {
 
   } else if (id === 'prism') {
     // Prism Cannon (Photon+Vortex) — rainbow crystal prism
-    let ptime=gameTime*0.06;
+    let ptime=s.gameTime*0.06;
     ctx.fillStyle='#1a001a'; ctx.fillRect(-12,-2,24,12); ctx.strokeStyle='#440044'; ctx.lineWidth=1.5; ctx.strokeRect(-12,-2,24,12);
     ctx.fillStyle='#0a000a'; ctx.fillRect(-6,-14,12,12); ctx.strokeStyle='#330033'; ctx.strokeRect(-6,-14,12,12);
     [[0,-14],[-5,-8],[5,-8],[-3,-3],[3,-3]].forEach(([px,py],i)=>{
@@ -630,7 +636,7 @@ function drawTower(t) {
 }
 
 // ============ DRAW ROBOTS ============
-function drawRobot(e) {
+function drawRobot(e: Enemy): void {
   let cx = e.x, cy = e.y;
   let s = e.type.size;
   let col = e.type.color;
@@ -739,7 +745,7 @@ function drawRobot(e) {
     ctx.beginPath(); ctx.arc(8, -4 - bodyBob, 3, 0, Math.PI*2); ctx.fill();
 
   } else if (name === 'Tank') {
-    let rumble = Math.sin(gameTime * 0.3) * 0.5;
+    let rumble = Math.sin(s.gameTime * 0.3) * 0.5;
     ctx.fillStyle = '#444';
     ctx.fillRect(-13, 4, 26, 6);
     ctx.fillStyle = '#333';
@@ -788,8 +794,8 @@ function drawRobot(e) {
     ctx.shadowBlur = 0;
 
   } else if (name === 'Drone') {
-    let hover = Math.sin(gameTime * 0.15) * 3;
-    let propSpin = gameTime * 0.8;
+    let hover = Math.sin(s.gameTime * 0.15) * 3;
+    let propSpin = s.gameTime * 0.8;
     ctx.translate(0, hover);
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath();
@@ -873,7 +879,7 @@ function drawRobot(e) {
     ctx.strokeStyle = '#969';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.fillStyle = hexColor('#f4f', 0.5 + Math.sin(gameTime*0.08)*0.3);
+    ctx.fillStyle = hexColor('#f4f', 0.5 + Math.sin(s.gameTime*0.08)*0.3);
     ctx.beginPath(); ctx.arc(0, -1 - bodyBob, 4, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#c3c';
     ctx.lineWidth = 1;
@@ -945,7 +951,7 @@ function drawRobot(e) {
   } else if (name === 'Titan') {
     let legSwing = Math.sin(walk) * 0.25;
     let bodyBob = Math.abs(Math.sin(walk)) * 2;
-    let breathe = Math.sin(gameTime * 0.05) * 0.5;
+    let breathe = Math.sin(s.gameTime * 0.05) * 0.5;
     ctx.save();
     ctx.translate(-10, 6 - bodyBob);
     ctx.rotate(legSwing);
@@ -1049,7 +1055,7 @@ function drawRobot(e) {
 
   } else if (name === 'Juggernaut') {
     let stomp = Math.abs(Math.sin(walk * 0.5)) * 3;
-    let breathe = Math.sin(gameTime * 0.04) * 1;
+    let breathe = Math.sin(s.gameTime * 0.04) * 1;
     // Shadow
     ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0,20,22,5,0,0,Math.PI*2); ctx.fill();
     // Four massive legs
@@ -1082,7 +1088,7 @@ function drawRobot(e) {
     for(let si=-1;si<=1;si+=2){
       ctx.fillStyle='#550810'; ctx.fillRect(si>0?16:-26,-24+breathe,10,12); ctx.strokeStyle='#aa1520'; ctx.lineWidth=1.5; ctx.strokeRect(si>0?16:-26,-24+breathe,10,12);
       ctx.fillStyle='#3a0608'; ctx.fillRect(si>0?24:-22,-26+breathe,6,16);
-      let sp=Math.sin(gameTime*0.12)*0.3+0.7;
+      let sp=Math.sin(s.gameTime*0.12)*0.3+0.7;
       ctx.fillStyle=hexColor('#ff2200',sp); ctx.shadowColor='#ff2200'; ctx.shadowBlur=8+sp*4;
       ctx.beginPath(); ctx.arc(si*24,-18+breathe,3.5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
     }
@@ -1099,7 +1105,7 @@ function drawRobot(e) {
     ctx.beginPath(); ctx.arc(8,-28+breathe,1.5,0,Math.PI*2); ctx.fill();
 
   } else if (name === 'Specter') {
-    let phase = gameTime * 0.08;
+    let phase = s.gameTime * 0.08;
     let hover = Math.sin(phase * 1.3) * 3;
     let blink = Math.sin(phase * 4) * 0.5 + 0.5;
     // Speed trails
@@ -1131,7 +1137,7 @@ function drawRobot(e) {
     ctx.fillStyle='rgba(0,200,160,0.5)';
     ctx.beginPath(); ctx.moveTo(-2,2+hover); ctx.lineTo(-10,6+hover); ctx.lineTo(-4,8+hover); ctx.closePath(); ctx.fill();
     ctx.beginPath(); ctx.moveTo(2,2+hover); ctx.lineTo(10,6+hover); ctx.lineTo(4,8+hover); ctx.closePath(); ctx.fill();
-    // Warp particles
+    // Warp s.particles
     if(Math.random()<0.4){ctx.fillStyle='rgba(0,255,180,0.6)'; ctx.beginPath(); ctx.arc((Math.random()-0.5)*12,hover+(Math.random()-0.5)*12,1,0,Math.PI*2); ctx.fill();}
   }
 
@@ -1153,7 +1159,7 @@ function drawRobot(e) {
 }
 
 // ============ MAIN DRAW ============
-function draw() {
+export function draw() {
   ctx.fillStyle = '#060612';
   ctx.fillRect(0, 0, C.width, C.height);
 
@@ -1166,7 +1172,7 @@ function draw() {
   ctx.fillStyle = '#14143a';
   for (let x = 0; x <= COLS; x+=2) for (let y = 0; y <= ROWS; y+=2) { ctx.beginPath(); ctx.arc(x*TILE,y*TILE,1.2,0,Math.PI*2); ctx.fill(); }
   // Pulsing circuit lines (horizontal + vertical randomly placed)
-  ctx.strokeStyle = hexColor('#1a1a55', 0.5 + Math.sin(gameTime*0.03)*0.3);
+  ctx.strokeStyle = hexColor('#1a1a55', 0.5 + Math.sin(s.gameTime*0.03)*0.3);
   ctx.lineWidth = 0.8;
   [2,5,8,12,16,19].forEach(x=>{ctx.beginPath(); ctx.moveTo(x*TILE,0); ctx.lineTo(x*TILE,C.height); ctx.stroke();});
   [1,4,7,10,13].forEach(y=>{ctx.beginPath(); ctx.moveTo(0,y*TILE); ctx.lineTo(C.width,y*TILE); ctx.stroke();});
@@ -1223,7 +1229,7 @@ function draw() {
     ctx.restore();
   }
 
-  mines.forEach(m => {
+  s.mines.forEach(m => {
     ctx.save();
     ctx.translate(m.x, m.y);
     if (m.detonated) {
@@ -1236,7 +1242,7 @@ function draw() {
       ctx.restore();
       return;
     }
-    let armPulse = m.armed ? Math.sin(gameTime * 0.15) * 0.3 + 0.7 : 0.3;
+    let armPulse = m.armed ? Math.sin(s.gameTime * 0.15) * 0.3 + 0.7 : 0.3;
     ctx.fillStyle = '#3a3a3a';
     ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#555';
@@ -1263,7 +1269,7 @@ function draw() {
       ctx.fillStyle = hexColor('#f42', armPulse);
       ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI*2); ctx.fill();
       ctx.shadowBlur = 0;
-      if (Math.sin(gameTime * 0.2) > 0) {
+      if (Math.sin(s.gameTime * 0.2) > 0) {
         ctx.fillStyle = '#f00';
         ctx.beginPath(); ctx.arc(5, -5, 1.2, 0, Math.PI*2); ctx.fill();
       }
@@ -1289,12 +1295,12 @@ function draw() {
     ctx.restore();
   });
 
-  towers.forEach(drawTower);
+  s.towers.forEach(drawTower);
 
-  let sortedEnemies = [...enemies].sort((a,b) => a.y - b.y);
+  let sortedEnemies = [...s.enemies].sort((a,b) => a.y - b.y);
   sortedEnemies.forEach(drawRobot);
 
-  bullets.forEach(b => {
+  s.bullets.forEach(b => {
     b.trail.forEach(t => {
       ctx.globalAlpha = t.life / 8 * 0.5;
       ctx.fillStyle = b.color;
@@ -1337,7 +1343,7 @@ function draw() {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       for (let i = 0; i < 6; i++) {
-        let a = (i/6)*Math.PI*2 + gameTime*0.15;
+        let a = (i/6)*Math.PI*2 + s.gameTime*0.15;
         ctx.beginPath();
         ctx.moveTo(b.x + Math.cos(a)*2, b.y + Math.sin(a)*2);
         ctx.lineTo(b.x + Math.cos(a)*6, b.y + Math.sin(a)*6);
@@ -1379,7 +1385,7 @@ function draw() {
     ctx.shadowBlur = 0;
   });
 
-  particles.forEach(p => {
+  s.particles.forEach(p => {
     let alpha = Math.min(1, p.life / 15);
     ctx.globalAlpha = alpha;
     if (p.ring) {
@@ -1410,7 +1416,7 @@ function draw() {
   ctx.globalAlpha = 1;
 
   // Animated IN marker
-  let inPulse = Math.sin(gameTime * 0.1) * 0.3 + 0.7;
+  let inPulse = Math.sin(s.gameTime * 0.1) * 0.3 + 0.7;
   ctx.fillStyle = hexColor('#00ff44', inPulse * 0.25);
   ctx.fillRect(PATH[0][0]*TILE, PATH[0][1]*TILE, TILE, TILE);
   ctx.strokeStyle = hexColor('#00ff44', inPulse); ctx.lineWidth = 2;
@@ -1420,7 +1426,7 @@ function draw() {
 
   let last = PATH[PATH.length-1];
   // Animated OUT marker
-  let outPulse = Math.sin(gameTime * 0.1 + Math.PI) * 0.3 + 0.7;
+  let outPulse = Math.sin(s.gameTime * 0.1 + Math.PI) * 0.3 + 0.7;
   ctx.fillStyle = hexColor('#ff2200', outPulse * 0.25);
   ctx.fillRect(last[0]*TILE, last[1]*TILE, TILE, TILE);
   ctx.strokeStyle = hexColor('#ff2200', outPulse); ctx.lineWidth = 2;
@@ -1436,19 +1442,11 @@ function draw() {
   ctx.fillStyle = hexColor('#ff2200', outPulse);
   ctx.fillText('OUT', last[0]*TILE+8, last[1]*TILE+22);
 
-  document.getElementById('money').textContent = money;
-  document.getElementById('wave').textContent = waveNum;
-  document.getElementById('lives').textContent = lives;
-  document.getElementById('score').textContent = score;
-  document.getElementById('msg').textContent = msgTimer > 0 ? msg : '';
+  document.getElementById('money')!.textContent = String(s.money);
+  document.getElementById('wave')!.textContent = String(s.waveNum);
+  document.getElementById('lives')!.textContent = String(s.lives);
+  document.getElementById('score')!.textContent = String(s.score);
+  document.getElementById('msg')!.textContent = s.msgTimer > 0 ? s.msg : '';
 }
 
-function loop() {
-  for (let _s = 0; _s < gameSpeed; _s++) { if (lives > 0) update(); }
-  draw();
-  requestAnimationFrame(loop);
-}
-function setSpeed(n) {
-  gameSpeed = n; window.gameSpeed = n;
-  document.querySelectorAll('.spd-btn').forEach(b => b.classList.toggle('selected', +b.dataset.spd === n));
-}
+// loop() and setSpeed() are defined in main.ts
