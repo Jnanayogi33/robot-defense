@@ -320,3 +320,62 @@ button { min-height: 44px; }
 
 /* Level glow indicators */
 .tower-level-indicator { position: absolute; }
+
+/* ── TUTORIAL TOOLTIP ──────────────────────────────────────────────────── */
+#tutorial-tooltip {
+  position: fixed;
+  z-index: 200;
+  width: 240px;
+  background: #0a1a2a;
+  border: 2px solid #0ff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 0 20px #0ff4;
+  font-size: 12px;
+  color: #ccc;
+  display: none;
+}
+.tut-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.tut-step { color: #0ff; font-size: 10px; }
+.tut-title { color: #fff; font-weight: bold; font-size: 13px; flex: 1; }
+.tut-skip { background: transparent; border: 1px solid #444; color: #666; font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; min-height: 24px; font-family: inherit; }
+.tut-skip:hover { color: #999; border-color: #666; }
+.tut-body { line-height: 1.5; }
+
+/* Tooltip arrow */
+.tutorial-tooltip.arrow-left::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: #0ff;
+}
+.tutorial-tooltip.arrow-right::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: #0ff;
+}
+
+/* ── WAVE PREVIEW ──────────────────────────────────────────────────────── */
+#wave-preview {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  border: 1px solid #0ff4;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #ccc;
+  z-index: 50;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#wave-preview span { color: #0ff; }

@@ -7,6 +7,8 @@ import { loadSprites } from './sprites';
 import { initCampaignUI, showResults, showScreen, getDifficulty, DIFF_MULTIPLIERS, launchMap } from './campaign';
 import { PATH, pathSet, TILE, COLS, ROWS, buildPath, PATH_POINTS, ENEMY_TYPES } from './constants';
 import { initHero, setupHeroInputs, updateHero } from './hero';
+import { startTutorial, cleanupTutorial } from './tutorial';
+import { showWavePreview, setPreviewMap } from './wavepreview';
 import type { MapDef } from './types';
 
 // ── EXPOSE GLOBALS ────────────────────────────────────────────────────────
@@ -59,6 +61,15 @@ let gameStartLives = 20;
   // Initialize hero
   initHero();
   resultsShown = false;
+
+  // Set up wave preview for this map
+  setPreviewMap(mapDef);
+
+  // Start tutorial for map 1-1 first play
+  cleanupTutorial();
+  if (mapDef.id === '1-1') {
+    setTimeout(() => startTutorial(), 1000);
+  }
 };
 
 // Override startWave to use campaign waves
@@ -66,6 +77,8 @@ const origStartWave = startWave;
 (window as any).startWave = () => {
   if (s.waveActive) return;
   if (currentMapDef && currentWaveIndex < currentMapDef.waves.length) {
+    // Show wave preview BEFORE this wave
+    showWavePreview(currentWaveIndex);
     // Campaign wave
     const waveDef = currentMapDef.waves[currentWaveIndex];
     currentWaveIndex++;

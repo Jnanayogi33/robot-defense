@@ -53,6 +53,21 @@ export const DIFF_MULTIPLIERS: Record<Difficulty, { hp: number; gold: number }> 
 type ScreenId = 'screen-menu' | 'screen-world-select' | 'screen-map-select' | 'screen-game' | 'screen-results';
 
 export function showScreen(id: ScreenId): void {
+  // Fade out current screen
+  const current = document.querySelector('.screen.active') as HTMLElement | null;
+  if (current && current.id !== id) {
+    current.style.transition = 'opacity 0.2s';
+    current.style.opacity = '0';
+    setTimeout(() => {
+      current.classList.remove('active');
+      activateScreen(id);
+    }, 200);
+  } else {
+    activateScreen(id);
+  }
+}
+
+function activateScreen(id: string): void {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
   if (el) {
