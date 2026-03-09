@@ -3,6 +3,7 @@ import { s } from './state';
 import { ctx, C } from './game';
 import { COLS, ROWS, TILE, PATH, pathSet } from './constants';
 import type { Tower, Enemy, Mine, Particle, Bullet } from './types';
+import { getSprite, TOWER_SPRITE_MAP, ENEMY_SPRITE_MAP } from './sprites';
 
 // ============ DRAW HELPERS ============
 function hexColor(hex: string, alpha: number): string {
@@ -22,6 +23,25 @@ function drawTower(t: Tower): void {
   let col = t.def.color;
   let flash = t.fireFlash > 0;
 
+  // Try sprite first
+  const spriteName = TOWER_SPRITE_MAP[id];
+  const sprite = spriteName ? getSprite(spriteName) : null;
+  if (sprite) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // Draw sprite centered (scaled to TILE size)
+    const sz = TILE - 2;
+    if (flash) {
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 16;
+    }
+    ctx.drawImage(sprite, -sz / 2, -sz / 2, sz, sz);
+    ctx.shadowBlur = 0;
+    // Rotation indicator for aimed towers
+    ctx.restore();
+    return;
+  }
+  // Fallback: canvas drawing
   ctx.save();
   ctx.translate(cx, cy);
 
@@ -638,13 +658,45 @@ function drawTower(t: Tower): void {
 // ============ DRAW ROBOTS ============
 function drawRobot(e: Enemy): void {
   let cx = e.x, cy = e.y;
-  let s = e.type.size;
+  let sz = e.type.size;
   let col = e.type.color;
   let name = e.type.name;
   let walk = e.walkCycle;
   let facing = e.facing;
   let slowed = e.slowTimer > 0;
 
+  // Try sprite first
+  const spriteName = ENEMY_SPRITE_MAP[name];
+  const sprite = spriteName ? getSprite(spriteName) : null;
+  if (sprite) {
+    const displaySz = Math.max(sz * 3, 20);
+    ctx.save();
+    ctx.translate(cx, cy);
+    // Flip horizontally based on facing direction
+    if (facing > Math.PI / 2 || facing < -Math.PI / 2) {
+      ctx.scale(-1, 1);
+    }
+    // Slow effect tint
+    if (slowed) {
+      ctx.filter = 'hue-rotate(180deg) brightness(1.5)';
+    }
+    ctx.drawImage(sprite, -displaySz / 2, -displaySz / 2, displaySz, displaySz);
+    ctx.filter = 'none';
+    ctx.restore();
+    // Draw HP bar
+    const bw = Math.max(sz * 2.5, 16);
+    const bh = 3;
+    const bx = cx - bw / 2;
+    const barOffset = name === 'Titan' ? 22 : name === 'Mech' ? 18 : name === 'Drone' ? 12 : sz + 6;
+    const by = cy - barOffset - displaySz / 2 + 6;
+    ctx.fillStyle = '#300';
+    ctx.fillRect(bx, by, bw, bh);
+    const hpRatio = e.hp / e.maxHp;
+    ctx.fillStyle = hpRatio > 0.5 ? '#0f0' : hpRatio > 0.25 ? '#ff0' : '#f00';
+    ctx.fillRect(bx, by, bw * hpRatio, bh);
+    return;
+  }
+  // Fallback: canvas drawing
   ctx.save();
   ctx.translate(cx, cy);
 
@@ -1143,10 +1195,10 @@ function drawRobot(e: Enemy): void {
 
   ctx.restore();
 
-  let bw = Math.max(s * 2.5, 16);
+  let bw = Math.max(sz * 2.5, 16);
   let bh = 3;
   let bx = cx - bw/2;
-  let barOffset = name === 'Titan' ? 22 : name === 'Mech' ? 18 : name === 'Drone' ? 12 : s + 6;
+  let barOffset = name === 'Titan' ? 22 : name === 'Mech' ? 18 : name === 'Drone' ? 12 : sz + 6;
   let by = cy - barOffset;
   ctx.fillStyle = '#300';
   ctx.fillRect(bx, by, bw, bh);

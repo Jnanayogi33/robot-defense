@@ -3,6 +3,7 @@ import { s } from './state';
 import { sizeCanvas, update, startWave, restartGame, sellMode, toggleFuse, setSpeed, updateShopUI } from './game';
 import { draw } from './draw';
 import { Music } from './audio';
+import { loadSprites } from './sprites';
 
 // Expose globals for HTML onclick handlers
 (window as any).startWave = startWave;
@@ -14,6 +15,9 @@ import { Music } from './audio';
 
 // Initialize canvas size
 sizeCanvas();
+
+// Start loading sprites (game works with canvas fallback while loading)
+loadSprites();
 
 // Game loop
 function loop(): void {
