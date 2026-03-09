@@ -4,6 +4,7 @@ import { ctx, C } from './game';
 import { COLS, ROWS, TILE, PATH, pathSet } from './constants';
 import type { Tower, Enemy, Mine, Particle, Bullet } from './types';
 import { getSprite, TOWER_SPRITE_MAP, ENEMY_SPRITE_MAP } from './sprites';
+import { drawHero } from './hero';
 
 // ============ DRAW HELPERS ============
 function hexColor(hex: string, alpha: number): string {
@@ -1521,6 +1522,9 @@ export function draw() {
   ctx.shadowBlur = 0;
   ctx.fillStyle = hexColor('#ff2200', outPulse);
   ctx.fillText('OUT', last[0]*TILE+8, last[1]*TILE+22);
+
+  // Draw ARIA-7 hero
+  drawHero();
 
   document.getElementById('money')!.textContent = String(s.money);
   document.getElementById('wave')!.textContent = String(s.waveNum);

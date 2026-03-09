@@ -6,6 +6,7 @@ import { Music } from './audio';
 import { loadSprites } from './sprites';
 import { initCampaignUI, showResults, showScreen, getDifficulty, DIFF_MULTIPLIERS, launchMap } from './campaign';
 import { PATH, pathSet, TILE, COLS, ROWS, buildPath, PATH_POINTS, ENEMY_TYPES } from './constants';
+import { initHero, setupHeroInputs, updateHero } from './hero';
 import type { MapDef } from './types';
 
 // ── EXPOSE GLOBALS ────────────────────────────────────────────────────────
@@ -54,6 +55,10 @@ let gameStartLives = 20;
   // Patch constants - update the pathSet used by game handlers
   (window as any)._currentPath = currentMapPath;
   (window as any)._currentPathSet = currentMapPathSet;
+
+  // Initialize hero
+  initHero();
+  resultsShown = false;
 };
 
 // Override startWave to use campaign waves
@@ -117,6 +122,9 @@ loadSprites();
 // ── CAMPAIGN UI ───────────────────────────────────────────────────────────
 initCampaignUI();
 
+// ── HERO INPUTS ───────────────────────────────────────────────────────────
+setupHeroInputs();
+
 // ── WAVE COMPLETE DETECTION & RESULTS ─────────────────────────────────────
 let lastWaveActive = false;
 let resultsShown = false;
@@ -127,7 +135,7 @@ function loop(): void {
   const prevMoney = totalGold;
 
   for (let i = 0; i < s.gameSpeed; i++) {
-    if (s.lives > 0) update();
+    if (s.lives > 0) { update(); updateHero(); }
   }
   draw();
 

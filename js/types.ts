@@ -114,6 +114,19 @@ export interface Mine {
   flashTimer: number;
 }
 
+export interface Hero {
+  x: number;
+  y: number;
+  hp: number;
+  maxHp: number;
+  level: number;
+  empCooldown: number;
+  shield: number;
+  retreating: boolean;
+  retreatTimer: number;
+  dragging: boolean;
+}
+
 export interface MapDef {
   id: string;
   world: number;
@@ -151,4 +164,5 @@ export interface GameState {
   fuseTarget: Tower | null;
   placingMine: boolean;
   gameSpeed: number;
+  hero: Hero | null;
 }

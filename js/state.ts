@@ -25,4 +25,5 @@ export const s: GameState = {
   fuseTarget: null as Tower | null,
   placingMine: false,
   gameSpeed: 1,
+  hero: null,
 };
