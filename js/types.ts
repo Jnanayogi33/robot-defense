@@ -16,6 +16,8 @@ export interface TowerDef {
   pierce?: boolean;
   chain?: number;
   homing?: boolean;
+  hitsAir?: boolean;    // can target flying enemies
+  ignoresArmor?: boolean; // bullets ignore armor
 }
 
 export interface EnemyType {
@@ -65,6 +67,12 @@ export interface Enemy {
   walkCycle: number;
   facing: number;
   done?: boolean;
+  stunTimer?: number;  // EMP stun
+}
+
+export interface EnemyTypeExt extends EnemyType {
+  flying?: boolean;   // flies over path (Drone)
+  armored?: boolean;  // reduces non-pierce damage by 50%
 }
 
 export interface Bullet {
@@ -84,6 +92,8 @@ export interface Bullet {
   towerId: string;
   hit?: boolean;
   angle?: number;
+  hitsAir?: boolean;    // can hit flying enemies
+  ignorArmor?: boolean; // ignores armor reduction
 }
 
 export interface Particle {

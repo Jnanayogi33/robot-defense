@@ -115,11 +115,10 @@ function fireEMP(): void {
   }
   s.hero.empCooldown = EMP_COOLDOWN;
 
-  // Stun all enemies
+  // Stun all enemies (2 second stun via stunTimer)
   let count = 0;
   s.enemies.forEach(e => {
-    e.slowTimer = EMP_DURATION * 2;
-    e.speed = e.speed * 0.0; // freeze
+    e.stunTimer = EMP_DURATION;
     count++;
   });
 

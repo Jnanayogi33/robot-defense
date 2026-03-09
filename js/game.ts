@@ -259,21 +259,37 @@ export function update(): void {
 
   s.enemies.forEach(e => {
     if (e.slowTimer > 0) e.slowTimer--;
+    if (e.stunTimer !== undefined && e.stunTimer > 0) { e.stunTimer--; return; } // EMP stun
     const spd = e.speed * (e.slowTimer > 0 ? 0.4 : 1);
     e.walkCycle += spd * 0.15;
-    const target = PATH[e.pathIdx + 1];
-    if (!target) { e.done = true; return; }
-    const tx = target[0] * TILE + TILE / 2;
-    const ty = target[1] * TILE + TILE / 2;
-    const dx = tx - e.x, dy = ty - e.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 0.1) e.facing = Math.atan2(dy, dx);
-    if (dist < spd * 2) {
-      e.pathIdx++;
-      if (e.pathIdx >= PATH.length - 1) e.done = true;
-    } else {
+    const flying = (e.type as any).flying;
+    if (flying) {
+      // Flying enemies move directly toward the path exit
+      const exitPt = PATH[PATH.length - 1];
+      const tx = exitPt[0] * TILE + TILE / 2;
+      const ty = exitPt[1] * TILE + TILE / 2;
+      const dx = tx - e.x, dy = ty - e.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.1) e.facing = Math.atan2(dy, dx);
+      if (dist < spd * 3) { e.done = true; return; }
       e.x += (dx / dist) * spd;
       e.y += (dy / dist) * spd;
+      e.pathIdx = Math.min(e.pathIdx + 1, PATH.length - 2); // track progress for targeting
+    } else {
+      const target = PATH[e.pathIdx + 1];
+      if (!target) { e.done = true; return; }
+      const tx = target[0] * TILE + TILE / 2;
+      const ty = target[1] * TILE + TILE / 2;
+      const dx = tx - e.x, dy = ty - e.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.1) e.facing = Math.atan2(dy, dx);
+      if (dist < spd * 2) {
+        e.pathIdx++;
+        if (e.pathIdx >= PATH.length - 1) e.done = true;
+      } else {
+        e.x += (dx / dist) * spd;
+        e.y += (dy / dist) * spd;
+      }
     }
   });
 
@@ -304,6 +320,8 @@ export function update(): void {
   s.mines = s.mines.filter(m => !m.detonated || m.flashTimer > 0);
   s.mines.forEach(m => { if (m.flashTimer > 0) m.flashTimer--; });
 
+  const spawnsFromDeath: typeof s.enemies = [];
+
   s.enemies = s.enemies.filter(e => {
     if (e.done) { s.lives--; Sounds.lifeLost(); return false; }
     if (e.hp <= 0) {
@@ -316,16 +334,41 @@ export function update(): void {
         showMsg('⚡ OVERCLOCK! Towers supercharged for 10s!');
         Sounds.overclock();
       }
+      // Swarm splitting: spawn 2 Scouts on Swarm death
+      if (e.type.name === 'Swarm') {
+        const scoutType = ENEMY_TYPES.find(t => t.name === 'Scout')!;
+        for (let si = 0; si < 2; si++) {
+          spawnsFromDeath.push({
+            type: scoutType,
+            hp: scoutType.hp,
+            maxHp: scoutType.hp,
+            speed: scoutType.speed,
+            reward: 5,
+            pathIdx: Math.max(0, e.pathIdx - 1),
+            x: e.x + (Math.random() - 0.5) * 10,
+            y: e.y + (Math.random() - 0.5) * 10,
+            slowTimer: 0,
+            walkCycle: Math.random() * Math.PI * 2,
+            facing: e.facing,
+          });
+        }
+      }
       return false;
     }
     return true;
   });
+
+  // Add Swarm spawn children
+  s.enemies.push(...spawnsFromDeath);
 
   s.towers.forEach(t => {
     if (t.fireFlash > 0) t.fireFlash--;
     if (t.cooldown > 0) { t.cooldown--; return; }
     let best: Enemy | null = null;
     s.enemies.forEach(e => {
+      const flying = (e.type as any).flying;
+      // Ground towers can't hit flying enemies
+      if (flying && !t.def.hitsAir) return;
       const d = Math.hypot(e.x - t.x, e.y - t.y);
       if (d <= t.def.range && e.pathIdx > (best ? best.pathIdx : -1)) best = e;
     });
@@ -370,6 +413,8 @@ export function update(): void {
         homing: t.def.homing || false,
         trail: [],
         towerId: t.def.id,
+        hitsAir: t.def.hitsAir || false,
+        ignorArmor: t.def.ignoresArmor || false,
       });
     }
   });
@@ -399,14 +444,19 @@ export function update(): void {
       }
     } else if (d < b.speed * 2) {
       b.hit = true;
+      function applyDamage(enemy: Enemy, dmg: number): void {
+        const armored = (enemy.type as any).armored;
+        const finalDmg = (armored && !b.ignorArmor) ? Math.floor(dmg * 0.5) : dmg;
+        enemy.hp -= finalDmg;
+      }
       if (b.target && b.target.hp > 0) {
-        b.target.hp -= b.damage;
+        applyDamage(b.target, b.damage);
         if (b.slow) b.target.slowTimer = 60;
       }
       if (b.splash > 0) {
         s.enemies.forEach(e => {
           if (e !== b.target && Math.hypot(e.x - b.tx, e.y - b.ty) < b.splash) {
-            e.hp -= Math.floor(b.damage * 0.5);
+            applyDamage(e, Math.floor(b.damage * 0.5));
             if (b.slow) e.slowTimer = Math.max(e.slowTimer, 45);
           }
         });
@@ -415,7 +465,7 @@ export function update(): void {
       if (b.pierce) {
         s.enemies.forEach(e => {
           if (e !== b.target && Math.hypot(e.x - b.tx, e.y - b.ty) < 20) {
-            e.hp -= Math.floor(b.damage * 0.5);
+            applyDamage(e, Math.floor(b.damage * 0.5));
           }
         });
       }
